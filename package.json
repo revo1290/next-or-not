@@ -1,0 +1,31 @@
+{
+  "name": "next-or-not",
+  "version": "0.1.0",
+  "description": "An evidence-based Next.js fit assessor for humans and coding agents",
+  "type": "module",
+  "bin": {
+    "next-or-not": "scripts/assess.mjs"
+  },
+  "scripts": {
+    "assess": "node scripts/assess.mjs",
+    "test": "node --test",
+    "validate:skill": "python3 /root/.codex/skills/.system/skill-creator/scripts/quick_validate.py ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "SKILL.md",
+    "agents",
+    "references",
+    "scripts"
+  ],
+  "keywords": [
+    "nextjs",
+    "architecture",
+    "agent-skill",
+    "react",
+    "framework-selection"
+  ],
+  "license": "MIT"
+}
