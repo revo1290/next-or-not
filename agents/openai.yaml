@@ -1,0 +1,6 @@
+interface:
+  display_name: "Next or Not"
+  short_description: "Next.jsの必要性と代替構成を根拠付きで判定する"
+  default_prompt: "Use $next-or-not to audit this project and recommend whether to keep Next.js or choose an alternative."
+policy:
+  allow_implicit_invocation: true
