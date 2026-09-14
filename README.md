@@ -20,6 +20,32 @@ For machine-readable evidence:
 node scripts/assess.mjs /path/to/existing-next-app --json
 ```
 
+Add the seven non-code facts that can change the action without replacing repository evidence:
+
+```bash
+node scripts/assess.mjs /path/to/existing-next-app --context context.json
+node scripts/assess.mjs /path/to/existing-next-app --interactive
+```
+
+`--interactive` prompts only in a TTY and skips fields already supplied by `--context`. A context file may contain the fields directly or below `answers`:
+
+```json
+{
+  "answers": {
+    "reviewDriver": "開発速度",
+    "evidenceStrength": "継続的な計測",
+    "productionRouteProfile": "mixed",
+    "deploymentConstraint": "Node / container",
+    "serverCapabilityCriticality": "重要だが代替可能",
+    "roadmapDirection": "現状維持",
+    "changeCapacity": "小さなspikeのみ"
+  },
+  "note": "Additional facts belong in this one free-form note."
+}
+```
+
+Every field accepts `unknown`; blank interactive answers become `unknown`. Invalid values are also converted to `unknown` with a structured validation error instead of affecting the recommendation.
+
 ## What changed in v0.2
 
 The first version ranked frameworks using user-supplied answers and additive scores. That was explainable, but too sensitive to subjective inputs and arbitrary weights. v0.2 instead audits four independent dimensions:
@@ -38,7 +64,7 @@ Results use `low`, `medium`, and `high` bands rather than probability-looking sc
 The scanner detects:
 
 - Next.js workspaces inside monorepos;
-- declared versions and exact npm lockfile versions;
+- declared versions and exact installed/lockfile versions from npm, pnpm, Yarn, and Bun projects;
 - App Router, Pages Router, and mixed-router applications;
 - pages, layouts, Route Handlers, and Pages API routes;
 - `use client`, `use server`, and `use cache` boundaries;
@@ -53,6 +79,8 @@ Static-export analysis includes request-dependent Route Handlers and dynamic App
 
 JavaScript, TypeScript, JSX, and TSX are parsed with Babel. Comments, ordinary strings, type-only imports, unused imports, and unrelated same-name functions are not treated as runtime evidence. Route Handler Request parameters are counted only when their binding is referenced. Each signal retains summary counts and includes bounded file, line, and `detectionMethod` evidence in JSON output. Parse failures are explicit and use only a limited fallback, which lowers confidence. Generated output, dependencies, and large files are excluded and reported as confidence limits. Parser selection is documented in [`references/adr-001-javascript-parser.md`](references/adr-001-javascript-parser.md).
 
+Version resolution is read-only and workspace-specific. The precedence is: workspace-installed package, root-hoisted installed package, matching workspace lock entry, root lock entry, exact `package.json` declaration, then explicit unresolved status. JSON output records the chosen source, lockfile and schema version, alternative candidates, warnings, and parse failures. Supported inputs are `package-lock.json` v1–v3, `npm-shrinkwrap.json`, current and major older `pnpm-lock.yaml` structures, Yarn Classic and Berry `yarn.lock`, and Bun text `bun.lock`. Installed packages and lockfiles are compared instead of silently choosing one.
+
 ## Recommendation semantics
 
 | Recommendation | Meaning |
@@ -66,6 +94,12 @@ JavaScript, TypeScript, JSX, and TSX are parsed with Babel. Comments, ordinary s
 
 The detailed derivation and known blind spots are in [`references/decision-model.md`](references/decision-model.md).
 
+## Seven-question human evidence supplement
+
+The seven fields are fixed: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Additional information goes into `note`, not an eighth scored question.
+
+Raw answers, derived implications, code/context contradictions, validation errors, and the recommendation before/after integration are separate in JSON. Answers cannot erase code evidence or independently create `migration-candidate`. Low-strength pain remains a measurement task; static-only deployment conflicting with request-time code becomes a configuration investigation; and unavailable migration capacity constrains action to reversible simplification.
+
 ## Agent skill
 
 Install or link this repository as a skill and invoke `$next-or-not`. The skill runs the audit, verifies material findings in source, asks only for business facts that cannot be derived from code, and produces a continuation decision with a rollback-safe validation plan.
@@ -76,11 +110,25 @@ The bundled research report uses official Next.js and React documentation for ca
 
 The article [そのプロジェクト、本当にNext.js必要？](https://ashunar0.dev/posts/does-your-project-need-nextjs/) motivated the project. Its arguments are treated as hypotheses, not scoring rules.
 
+## Real-world calibration
+
+`dataset/real-world.json` freezes 30 public Next.js repositories at full commit SHAs. The set covers App Router, Pages Router, mixed and content-oriented applications; server routes; single-package and monorepo layouts; npm, pnpm, Yarn and Bun; and supported, unsupported and pre-release versions. Every record includes license provenance, workspace, expected version/router/features, four independently assigned expert labels, an allowed recommendation set, rationale, review status and known ambiguity.
+
+The labels were recorded before running this tool. The evaluator retains disagreements and reports signal precision/recall, parser and lockfile failures, router/dimension/recommendation agreement, dangerous-error rate, confidence calibration and slices by router, package manager, project size and support class. It only fetches pinned Git objects and reads source; it never installs dependencies or executes repository code.
+
+```bash
+npm run dataset:validate              # offline manifest and coverage checks
+npm run dataset:smoke                 # seven-repository CI subset
+npm run dataset:full                  # all 30, writes JSON plus the baseline report
+```
+
+Pull requests run the fixed smoke set. A scheduled or manually dispatched workflow runs the complete set. The initial results and label-disagreement policy are documented in [`references/calibration-baseline.md`](references/calibration-baseline.md).
+
 ## Limits
 
 Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime, and it does not perform whole-program data flow across wrapper modules. The tool therefore never emits `migrate`.
 
-Only npm lockfiles are currently resolved to an exact Next.js version. pnpm, Yarn, and Bun projects retain the declared range and receive a confidence limit until lockfile parsers are added.
+Legacy binary `bun.lockb` is identified but not guessed. If no safe installed-package fallback exists, the version remains unresolved with `unsupported-binary-lockfile` provenance. Malformed, oversized, or unsupported lockfiles also remain explicit confidence limits. Installed-package symlinks that resolve outside the scanned repository are not followed.
 
 ## Contributing
 
@@ -91,6 +139,8 @@ npm run check
 ```
 
 A detection or decision change should include a realistic regression fixture, a documented rationale, and an updated evidence date when the underlying framework fact is time-sensitive.
+
+Changes must keep the dangerous-error gate at zero. A dangerous error is a migration-candidate result for a high keep-value case, understated unsupported/pre-release maintenance risk, or an actionable result emitted with low scan confidence.
 
 ## License
 

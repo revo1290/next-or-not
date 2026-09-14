@@ -1,0 +1,72 @@
+name: Real-world calibration
+
+on:
+  pull_request:
+    paths:
+      - dataset/**
+      - scripts/assess.mjs
+      - scripts/analyzers/**
+      - scripts/resolvers/**
+      - scripts/evaluate-dataset.mjs
+      - .github/workflows/calibration.yml
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run all 30 pinned repositories
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run dataset:validate
+
+  smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node scripts/evaluate-dataset.mjs --subset smoke --cache "$RUNNER_TEMP/next-or-not-dataset" --output "$RUNNER_TEMP/calibration-smoke.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calibration-smoke
+          path: ${{ runner.temp }}/calibration-smoke.json
+
+  full:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node scripts/evaluate-dataset.mjs --subset full --cache "$RUNNER_TEMP/next-or-not-dataset" --output "$RUNNER_TEMP/calibration-full.json" --markdown "$RUNNER_TEMP/calibration-full.md" --concurrency 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: calibration-full
+          path: |
+            ${{ runner.temp }}/calibration-full.json
+            ${{ runner.temp }}/calibration-full.md

@@ -10,9 +10,9 @@ Produce a defensible continuation decision for an existing Next.js system. Repos
 ## Workflow
 
 1. Resolve this skill's directory and run `node <skill-path>/scripts/assess.mjs <project-path> --json`. The command is read-only and does not execute project code.
-2. Confirm material detections in the listed source/configuration evidence. The scanner uses AST bindings and records file, line, and detection method. Pay particular attention to any `regex-fallback` result, version resolution, server APIs, mixed routers, static-export conflicts, and deprecated Next 16 patterns.
+2. Confirm material detections in the listed source/configuration evidence. The scanner uses AST bindings and records file, line, and detection method. Confirm each workspace's `resolution.source`, warnings, and errors; then pay particular attention to any `regex-fallback` result, server APIs, mixed routers, static-export conflicts, and deprecated Next 16 patterns.
 3. Read [references/decision-model.md](references/decision-model.md) to interpret the four dimensions and recommendation states. Read [references/framework-evidence.md](references/framework-evidence.md) when support policy, feature compatibility, or a framework claim affects the conclusion.
-4. Ask only for facts source inspection cannot establish and that could change the action: production pain, hosting constraints, incident/cost evidence, near-term roadmap, team ownership, and migration budget.
+4. Supply already-known non-code facts through `--context`. Ask only the still-unknown members of the fixed seven fields: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Put any extra fact in the single free-form `note`; do not create an eighth scored question.
 5. If the decision is consequential and internet access is available, refresh time-sensitive support/security claims from the linked official sources. State the verification date. A stale bundled snapshot lowers confidence; it does not prove a version is unsupported.
 6. Return a continuation decision, not a framework popularity comparison. Include observed facts, inferences, unknowns, risks, and the smallest rollback-safe validation step.
 
@@ -29,9 +29,11 @@ Keep these conclusions independent:
 
 - Never recommend a rewrite from static analysis, a score, framework sentiment, download counts, or public synthetic benchmarks.
 - Never present a fallback detection as equivalent to an AST detection. Name parser failures and reduce confidence.
+- Never allow a questionnaire answer to erase repository evidence or independently produce `migration-candidate`. Report raw answers, implications, and contradictions separately.
 - Never convert “few server features detected” into “Next.js has no value.” Record possible missed dynamic behavior and verify a production build or representative route.
 - Never treat framework coupling as a positive fit signal. It affects change economics only.
 - Never label a version vulnerable solely because it is below a bundled patch floor. Say that it is below the documented patched release and verify advisory applicability.
+- Never infer a lockfile version when parsing fails. Preserve `unresolved`, `malformed-lockfile`, or `unsupported-binary-lockfile` output and lower confidence.
 - Never equate SEO with a Next.js requirement, or Next.js with mandatory Vercel hosting.
 - Do not run `next build`, package scripts, codemods, upgrades, or migrations without the user's authorization; these execute or mutate project code.
 - Preserve the existing application while testing alternatives. A valid spike uses one representative vertical slice and has an explicit rollback path.

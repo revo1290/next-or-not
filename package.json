@@ -1,6 +1,6 @@
 {
   "name": "next-or-not",
-  "version": "0.3.0",
+  "version": "0.6.0",
   "description": "A source-evidence audit for deciding whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery",
   "type": "module",
   "bin": {
@@ -8,22 +8,27 @@
   },
   "scripts": {
     "assess": "node scripts/assess.mjs",
+    "dataset:validate": "node scripts/evaluate-dataset.mjs --validate-only",
+    "dataset:smoke": "node scripts/evaluate-dataset.mjs --subset smoke --output dataset/results-smoke.json",
+    "dataset:full": "node scripts/evaluate-dataset.mjs --subset full --output dataset/results-full.json --markdown references/calibration-baseline.md",
     "test": "node --test",
     "validate:skill": "node scripts/validate-skill.mjs",
-    "check": "npm test && npm run validate:skill"
+    "check": "npm test && npm run validate:skill && npm run dataset:validate"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "@babel/parser": "^8.0.0",
-    "@babel/traverse": "^8.0.0"
+    "@babel/traverse": "^8.0.0",
+    "yaml": "^2.8.1"
   },
   "files": [
     "SKILL.md",
     "agents",
     "references",
-    "scripts"
+    "scripts",
+    "dataset/real-world.json"
   ],
   "keywords": [
     "nextjs",
