@@ -1,104 +1,107 @@
-# Decision model
+# Existing Next.js continuation model
 
-The model distinguishes capability, suitability, and switching economics. It is intentionally inspectable and conservative: the CLI never emits an automatic `migrate` action.
+## Purpose
 
-## Inputs
+This model triages an existing Next.js repository. It deliberately does not rank replacement frameworks: replacement choice is downstream of proving that change has material value and acceptable economics.
 
-| Field | Values | Decision represented |
+The model separates observed facts, bounded inferences, and facts that static analysis cannot know. This avoids the v0.1 failure mode where subjective questionnaire answers and additive weights could manufacture a precise-looking winner.
+
+## Evidence classes
+
+| Class | Examples | Use |
 |---|---|---|
-| `audience` | `public`, `authenticated`, `mixed`, `unknown` | Whether routes need to work for anonymous users and crawlers |
-| `content` | `content`, `app`, `mixed`, `unknown` | Content-first pages versus interaction-heavy application UI |
-| `seo` | `low`, `medium`, `high`, `unknown` | Importance of initial HTML, crawl discovery, metadata, and non-JS bots |
-| `rendering` | `csr`, `static`, `ssr`, `hybrid`, `unknown` | The required deployment-time/request-time rendering behavior |
-| `serverData` | `none`, `simple`, `complex`, `unknown` | Need to compose server-only data during page rendering |
-| `rsc` | `none`, `useful`, `required`, `unknown` | Whether RSC solves a measured requirement rather than being preferred by default |
-| `backend` | `separate`, `bff`, `none`, `unknown` | Whether backend capabilities live elsewhere or with the UI |
-| `hosting` | `static`, `node`, `edge`, `vercel`, `flexible`, `unknown` | Hard runtime and provider constraints |
-| `maturity` | `strict`, `balanced`, `experimental`, `unknown` | Tolerance for beta/pre-1.0 framework risk |
-| `migration` | `new`, `existing-next`, `existing-other`, `unknown` | Whether switching cost must be considered |
+| Observed | package version, route files, imports, directives, configuration | May directly affect a dimension |
+| Inferred | server integration is material, app is static/client-leaning | Must name its observed basis |
+| Unknown | production cost, latency, incidents, delivery friction, roadmap | Must be supplied or measured before migration authorization |
 
-An answers file is a flat JSON object:
+Counts are based on unique files where possible. Path examples are capped so JSON remains usable. A repository-wide ratio is used only when at least ten or twenty source files exist; this prevents a two-file fixture from looking “100% deeply coupled.”
 
-```json
-{
-  "audience": "authenticated",
-  "content": "app",
-  "seo": "low",
-  "rendering": "csr",
-  "serverData": "none",
-  "rsc": "none",
-  "backend": "separate",
-  "hosting": "static",
-  "maturity": "strict",
-  "migration": "new"
-}
-```
+## Four independent dimensions
 
-## Hard constraints before scoring
+### Keep value
 
-Scores rank plausible fit; they do not repair contradictory requirements.
+Keep value estimates how much detected runtime behavior needs an explicit replacement. Strong categories are:
 
-- Static-only hosting conflicts with request-time SSR and runtime server functions. Build-time RSC and prerendering can still produce static output.
-- A stated RSC requirement strongly favors Next.js today, but first verify that the requirement is about the RSC execution model rather than ordinary SSR, route loaders, or server-only API access.
-- A strictly authenticated application has little search-indexing value, but public login, help, marketing, and shared-link routes can still justify mixed rendering.
-- An external backend does not make SSR useless. It does reduce the value of colocating a broad application backend inside the UI framework.
+- App Route Handlers or Pages API routes;
+- Server Actions (`use server`);
+- request-bound APIs imported from `next/headers`;
+- cache APIs/directives;
+- `getServerSideProps` or `getInitialProps`;
+- proxy/middleware;
+- a custom Next server.
 
-## Candidate boundaries
+Three or more categories, or broad server-file evidence, yields `high`. One category—or App Router without stronger evidence—yields `medium`. No server category yields `low`.
 
-### Next.js App Router
+App Router alone is not treated as proof of RSC business value. The scanner cannot establish whether default Server Components are materially reducing client code or merely wrapping a client-heavy application.
 
-Favor when a React application has a concrete need for the most complete RSC integration, per-route hybrid rendering, Server Functions coupled to UI mutations, or first-party Vercel operations. Do not mark it required merely because the project needs React, SEO, SSR, static output, routing, image handling, or a BFF: alternatives cover each of those capabilities.
+### Migration coupling
 
-### React Router Framework Mode
+Coupling estimates switching scope, not whether Next.js is good. It combines route files, files importing `next/*`, proxy/middleware, instrumentation, and server-category breadth.
 
-Favor when the team wants React, stable framework primitives, loaders/actions, Web API-oriented request handling, and a choice of CSR, SSR, or prerendering without making RSC central. React Router's official RSC APIs are currently marked unstable; do not treat them as equivalent to Next.js for a strict-maturity project without rechecking.
+- `high`: at least three server categories, at least 25 coupled-file observations, or a high ratio in a repository large enough for ratios to be meaningful;
+- `medium`: one server category, at least six coupled-file observations, or a meaningful ratio in at least ten source files;
+- `low`: smaller surface with no server category.
 
-### TanStack Start
+File counts are a first-order estimate only. A single central authentication proxy or cache abstraction can be more expensive to replace than many `next/link` imports.
 
-Favor when route-level type safety, TanStack ecosystem integration, and selective SSR (`true`, `false`, or `data-only`) materially simplify the application. Its current official status is beta/pre-1.0 in the evidence snapshot. A strict-maturity organization needs an explicit exception, upgrade strategy, and production spike.
+### Maintenance risk
 
-### Astro
+Maintenance risk uses a dated evidence snapshot. As reviewed 2026-09-14:
 
-Favor content-first sites whose default output should be static HTML, with isolated interactive islands and selected on-demand routes. Validate carefully for application-first products with dense shared client state or continuous interaction across most of the page.
+- Next.js 16 is Active LTS;
+- Next.js 15 is Maintenance LTS;
+- 14 and earlier are outside the documented supported versions;
+- official August 2026 patched releases are 16.3.3 and 15.5.24.
 
-### Vite SPA
+An exact version is resolved only from npm lockfiles in v0.2. A declared range such as `^16.0.0` cannot prove the installed patch, so it becomes a confidence limit rather than a security finding.
 
-Favor authenticated/internal application UIs backed by an independently owned API when client rendering and static asset deployment meet the requirements. Select a router and data layer deliberately. Vite is a build tool, not an application framework; the team owns conventions for routing, data, mutations, error boundaries, authentication integration, and SSR if later added.
+`modernize-first` is triggered by unsupported or pre-release versions, an exact version below the recorded patched release, removed experimental PPR configuration, deprecated `middleware` on Next 16, or `next lint` on Next 16. The tool says “below a documented patched release,” not “vulnerable,” because advisory applicability can depend on features and deployment.
 
-## Verdict semantics
+### Portability opportunity
 
-| Verdict | Meaning |
-|---|---|
-| `Next.js required` | A verified hard requirement currently makes Next.js materially unique, normally the most complete stable RSC integration |
-| `Next.js strong fit` | Next.js leads the heuristic by a meaningful margin, but alternatives may still work |
-| `Next.js viable but not required` | Next.js satisfies the constraints but has no decisive advantage |
-| `Next.js not justified` | At least one alternative fits materially better and no verified hard requirement offsets the extra surface |
-| `Insufficient evidence` | Too few project constraints are known to make a responsible recommendation |
+Portability is `high` when either:
 
-## Existing-system actions
+- `output: 'export'` is configured with no detected official incompatibility; or
+- App Router entry files are strongly client-directed and no server category is detected.
 
-The fit decision and action decision are separate.
+It is `low` when keep value is high. Otherwise it is medium or low according to the available evidence.
 
-- `keep`: Next.js remains the leading or near-leading fit after switching cost.
-- `reduce Next-specific surface`: the target architecture may be simpler, but existing coupling makes an immediate rewrite poor economics. New code should stop deepening unnecessary coupling while a seam is established.
-- `run migration spike`: an alternative leads materially and detected Next-specific coupling is low. Rebuild one representative vertical slice and measure build, runtime, operability, and delivery impact.
-- `migrate`: reserved for a human/agent conclusion after the spike demonstrates material value. The deterministic CLI does not emit it.
+The static-export checks cover detectable members of the official unsupported list: request-bound APIs, Server Actions, proxy/middleware, rewrites, redirects, headers, ISR/revalidation, intercepting routes, Pages API routes, default `next/image` optimization, Request-dependent Route Handlers, and dynamic routes when no `generateStaticParams` exists anywhere in the scanned app. Complete dynamic-parameter coverage and aliased/wrapped APIs still need deeper semantic analysis.
 
-## Required report evidence
+## Recommendation state machine
 
-For a high-confidence recommendation, record:
+Recommendations are intentionally asymmetric because retaining the current system is reversible while a rewrite is expensive.
 
-1. A route inventory: public/indexed, public/non-indexed, authenticated, static, request-time dynamic.
-2. The actual need behind SSR or RSC, including what users or systems fail without it.
-3. Backend ownership and deployment topology.
-4. Required response semantics: status codes, headers, cookies, streaming, caching, invalidation, and personalization.
-5. Provider constraints and whether platform-specific behavior is acceptable.
-6. Framework maturity and upgrade policy.
-7. Existing framework-specific surface and a migration estimate for representative routes.
-8. Project-specific measurements where performance or cost is part of the decision.
+1. No Next.js dependency → `not-applicable`.
+2. Low scan confidence → `insufficient-evidence`.
+3. High maintenance risk or a static-export contradiction → `modernize-first`.
+4. High keep value → `keep`.
+5. High portability plus low coupling → `migration-candidate`.
+6. Low keep value or high portability with remaining coupling → `keep-and-simplify`.
+7. Otherwise → `keep`.
 
-## Score interpretation
+`migration-candidate` means that a reversible comparison may be worth funding. It does not mean that migration is economically justified.
 
-Every candidate starts at 50 and receives documented positive or negative adjustments. The JSON output lists each adjustment. Scores are capped at 0–100 only for readability; they are ordinal heuristics, not probabilities, benchmarks, market data, or evidence of business value.
+## Confidence
 
-Change weights only when a test captures the intended before/after decision and the rationale is documented. Avoid tuning weights to force a preferred framework to win a single example.
+Confidence describes whether the scan had enough trustworthy repository evidence:
+
+- `high`: complete scan, recognized router, exact npm lockfile version, one Next workspace;
+- `medium`: usable result with an unresolved exact version, multiple aggregated Next workspaces, skipped large files, or a stale evidence snapshot;
+- `low`: truncated scan, repeated read errors, or no recognized route structure.
+
+Confidence never means “80% likely to be correct.” Business evidence can reverse a high-coverage repository conclusion.
+
+## Required human or runtime evidence
+
+Before authorizing migration, add:
+
+1. The concrete pain to remove, with incident, delivery, cost, or SLO evidence.
+2. A route inventory and deployed rendering classification.
+3. Hosting topology, cache ownership, response semantics, and observability requirements.
+4. A representative route spike with the same data, auth, UI, and deployment class.
+5. Measured build/runtime/client-output differences.
+6. Conversion estimate for a median-coupling route and worst-case route.
+7. Rollback path, retraining cost, and opportunity cost.
+
+If those facts do not demonstrate material benefit beyond switching cost, retain the existing system even when another framework appears simpler in isolation.

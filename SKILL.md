@@ -1,38 +1,49 @@
 ---
 name: next-or-not
-description: Audit a proposed or existing React web project to decide whether Next.js is required, merely suitable, or a poor fit, and compare evidence-based alternatives. Use for framework selection, Next.js adoption reviews, and migration feasibility; do not use for routine Next.js implementation work.
+description: Audit an existing Next.js repository to decide whether to keep it, simplify Next-specific surface, modernize first, or investigate migration. Use for Next.js continuation and migration-feasibility reviews; do not use for new-project framework selection or routine implementation work.
 ---
 
 # Next or Not
 
-Produce a defensible architecture recommendation, not a framework popularity vote.
+Produce a defensible continuation decision for an existing Next.js system. Repository signals establish architecture facts; they do not establish business value.
 
 ## Workflow
 
-1. Establish whether this is a new build or an existing system. For an existing repository, run the bundled `scripts/assess.mjs` resolved from this skill directory as `node <skill-path>/scripts/assess.mjs <project-path> --json`, then inspect the reported evidence. The script is advisory; confirm material findings in source and configuration.
-2. Identify only the unanswered constraints that could change the result: audience/indexability, rendering needs by route, backend ownership, hosting/runtime limits, React Server Components (RSC) value, maturity tolerance, and migration cost. Ask concise questions when these cannot be inferred.
-3. Read [references/decision-model.md](references/decision-model.md) before comparing candidates. Read [references/framework-evidence.md](references/framework-evidence.md) when a claim about framework capability, status, or portability affects the recommendation.
-4. If internet access is available and the decision is consequential, verify time-sensitive claims against the linked official documentation. Record an `as of` date. Do not treat blog opinion, download counts, stars, or synthetic benchmarks as architectural proof.
-5. Separate three conclusions:
-   - **Necessity:** a hard requirement uniquely or materially favors Next.js.
-   - **Fit:** Next.js is a reasonable choice even though alternatives satisfy the requirements.
-   - **Change economics:** an existing Next.js application should remain or migrate after accounting for migration and retraining cost.
-6. Return a short verdict, observed evidence, assumptions, a candidate comparison, risks, and the smallest validation plan that could resolve remaining uncertainty.
+1. Resolve this skill's directory and run `node <skill-path>/scripts/assess.mjs <project-path> --json`. The command is read-only and does not execute project code.
+2. Confirm material detections in the listed source/configuration examples. Pay particular attention to version resolution, server APIs, mixed routers, static-export conflicts, and deprecated Next 16 patterns.
+3. Read [references/decision-model.md](references/decision-model.md) to interpret the four dimensions and recommendation states. Read [references/framework-evidence.md](references/framework-evidence.md) when support policy, feature compatibility, or a framework claim affects the conclusion.
+4. Ask only for facts source inspection cannot establish and that could change the action: production pain, hosting constraints, incident/cost evidence, near-term roadmap, team ownership, and migration budget.
+5. If the decision is consequential and internet access is available, refresh time-sensitive support/security claims from the linked official sources. State the verification date. A stale bundled snapshot lowers confidence; it does not prove a version is unsupported.
+6. Return a continuation decision, not a framework popularity comparison. Include observed facts, inferences, unknowns, risks, and the smallest rollback-safe validation step.
+
+## Decision separation
+
+Keep these conclusions independent:
+
+- **Keep value:** detected Next.js server/runtime capabilities that require an intentional replacement.
+- **Migration coupling:** conversion scope created by routing, imports, configuration, and server semantics. Coupling is switching cost, not proof of architectural value.
+- **Maintenance risk:** support-policy, patch, deprecation, and mixed-router signals. Resolve avoidable maintenance debt before attributing it to the framework.
+- **Portability opportunity:** concrete static/client-leaning evidence with limited server coupling. This creates a migration candidate, not a migration order.
 
 ## Guardrails
 
-- Never equate SEO with an automatic Next.js requirement. Static prerendering and SSR are available elsewhere, and Google can render JavaScript with caveats.
-- Never claim Next.js requires Vercel. Distinguish core self-hosting support from provider-specific operational parity and convenience.
-- Never recommend a rewrite from score alone. Require a material capability, reliability, cost, or delivery advantage that exceeds migration cost.
-- Treat RSC and Server Functions as capabilities with boundary and operational costs, not universal upgrades.
-- Treat a pre-1.0 or beta candidate's maturity as a material production constraint. Verify current status before relying on the bundled snapshot.
-- Do not publish performance, bundle-size, cost, or productivity rankings without project-specific measurement.
-- Prefer the simplest architecture that satisfies known requirements, but include likely near-term requirements when there is concrete roadmap evidence.
+- Never recommend a rewrite from static analysis, a score, framework sentiment, download counts, or public synthetic benchmarks.
+- Never convert “few server features detected” into “Next.js has no value.” Record possible missed dynamic behavior and verify a production build or representative route.
+- Never treat framework coupling as a positive fit signal. It affects change economics only.
+- Never label a version vulnerable solely because it is below a bundled patch floor. Say that it is below the documented patched release and verify advisory applicability.
+- Never equate SEO with a Next.js requirement, or Next.js with mandatory Vercel hosting.
+- Do not run `next build`, package scripts, codemods, upgrades, or migrations without the user's authorization; these execute or mutate project code.
+- Preserve the existing application while testing alternatives. A valid spike uses one representative vertical slice and has an explicit rollback path.
 
 ## Output contract
 
-Use one of these verdicts: `Next.js required`, `Next.js strong fit`, `Next.js viable but not required`, `Next.js not justified`, or `Insufficient evidence`.
+Use exactly one CLI recommendation state:
 
-For existing Next.js systems, append a separate action: `keep`, `reduce Next-specific surface`, `run migration spike`, or `migrate`. A migration recommendation must name the triggering evidence and a rollback-safe proof-of-concept.
+- `keep`
+- `keep-and-simplify`
+- `modernize-first`
+- `migration-candidate`
+- `insufficient-evidence`
+- `not-applicable`
 
-Include the CLI's scores only as an explainable heuristic, never as probabilities or benchmark results.
+Report confidence as scan coverage (`low`, `medium`, or `high`), never as outcome probability. If recommending further migration discovery, name the triggering repository evidence and the business/operational measurement still required. The skill itself must not emit `migrate`.

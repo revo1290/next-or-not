@@ -1,71 +1,96 @@
 # next-or-not
 
-`next-or-not` checks whether Next.js is **required**, merely **a good fit**, or **unjustified** for a project. It combines a zero-dependency repository scanner, an explainable decision model, and an installable agent skill for Codex or other skill-aware coding agents.
+`next-or-not` audits an **existing Next.js repository** and answers a narrower, safer question than a framework leaderboard:
 
-It is deliberately not an anti-Next.js tool. Next.js supports SPA and static export, can be self-hosted, and remains the most complete React Server Components implementation. The tool makes those facts compete with equally real costs: rendering complexity, hosting constraints, framework coupling, maturity requirements, and migration economics.
+> Should this application keep Next.js, simplify its Next-specific surface, modernize first, or become a candidate for measured migration discovery?
+
+It is a zero-dependency, read-only static analyzer plus an installable agent skill. It does not execute project code, upload source, or authorize a rewrite.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/revo1290/next-or-not.git
 cd next-or-not
-node scripts/assess.mjs /path/to/project
+node scripts/assess.mjs /path/to/existing-next-app
 ```
 
-For non-interactive use, supply an answers file:
+For machine-readable evidence:
 
 ```bash
-node scripts/assess.mjs /path/to/project --answers answers.json --json
+node scripts/assess.mjs /path/to/existing-next-app --json
 ```
 
-The answer fields and scoring rules are documented in [`references/decision-model.md`](references/decision-model.md). Scores are transparent heuristics, not probabilities or benchmark results.
+## What changed in v0.2
+
+The first version ranked frameworks using user-supplied answers and additive scores. That was explainable, but too sensitive to subjective inputs and arbitrary weights. v0.2 instead audits four independent dimensions:
+
+| Dimension | Question |
+|---|---|
+| Keep value | Which detected Next.js server/runtime capabilities would require an explicit replacement? |
+| Migration coupling | How broadly do routing, imports, server behavior, and configuration depend on Next.js? |
+| Maintenance risk | Is the app behind the current support-policy snapshot or carrying known upgrade residue? |
+| Portability opportunity | Is there concrete evidence that the app is static/client-leaning with little server coupling? |
+
+Results use `low`, `medium`, and `high` bands rather than probability-looking scores. Confidence describes **scan coverage**, not certainty that the recommendation is commercially correct.
+
+## Automatic evidence
+
+The scanner detects:
+
+- Next.js workspaces inside monorepos;
+- declared versions and exact npm lockfile versions;
+- App Router, Pages Router, and mixed-router applications;
+- pages, layouts, Route Handlers, and Pages API routes;
+- `use client`, `use server`, and `use cache` boundaries;
+- imports from `next/headers`, `next/cache`, `next/server`, `next/navigation`, `next/image`, `next/font`, `next/link`, and `next/script`;
+- `getServerSideProps`, `getStaticProps`, `getStaticPaths`, and `getInitialProps`;
+- proxy, deprecated middleware, instrumentation, custom servers, route runtime and revalidation settings;
+- static export, standalone output, Cache Components, image loader choices, rewrites, redirects, headers, custom webpack, and removed experimental PPR configuration;
+- Next 16 upgrade residue such as `middleware` and `next lint`;
+- static-export contradictions documented by Next.js.
+
+Static-export analysis includes request-dependent Route Handlers and dynamic App Router routes with no detected `generateStaticParams` implementation. These are conservative source checks; a real build remains stronger evidence.
+
+Each signal includes file counts and bounded path examples in JSON output. Generated output, dependencies, and large files are excluded and reported as confidence limits.
+
+## Recommendation semantics
+
+| Recommendation | Meaning |
+|---|---|
+| `keep` | Detected server/runtime value is material, or Next.js remains the least speculative continuation. |
+| `keep-and-simplify` | No rewrite case is established, but new code should avoid unnecessary Next-specific surface. |
+| `modernize-first` | Patch/support/deprecation or configuration contradictions would contaminate a migration comparison. |
+| `migration-candidate` | Static/client-leaning evidence and low coupling justify a reversible comparison spike—not migration itself. |
+| `insufficient-evidence` | Repository coverage is too weak for a responsible recommendation. |
+| `not-applicable` | No `next` dependency was found. |
+
+The detailed derivation and known blind spots are in [`references/decision-model.md`](references/decision-model.md).
 
 ## Agent skill
 
-Copy or link this repository into your agent's skill directory, then invoke `$next-or-not`. The skill instructs the agent to inspect code, fill evidence gaps, verify time-sensitive framework claims, and distinguish:
-
-1. whether Next.js is actually required;
-2. whether it is still a sound choice;
-3. whether an existing application is worth migrating.
-
-## What is inspected
-
-The scanner reads `package.json`, framework configuration, and source file names/content while skipping generated and dependency directories. It reports signals such as:
-
-- App Router and Pages Router usage;
-- Client/Server Component directives;
-- Route Handlers and Server Actions;
-- Next.js cache, image, font, and metadata APIs;
-- static export configuration;
-- alternative router/framework dependencies.
-
-No source code or telemetry leaves the machine.
-
-## Supported candidates
-
-- Next.js App Router
-- React Router Framework Mode
-- TanStack Start
-- Astro
-- Vite SPA with React Router or TanStack Router and an optional separate API/BFF
-
-The initial scope is React-centered. Astro is included because content-heavy sites are a common case where a React full-stack framework may be unnecessary.
+Install or link this repository as a skill and invoke `$next-or-not`. The skill runs the audit, verifies material findings in source, asks only for business facts that cannot be derived from code, and produces a continuation decision with a rollback-safe validation plan.
 
 ## Research standard
 
-Capabilities and maturity are sourced primarily from official React, Next.js, React Router, TanStack, Astro, Vite, Hono, and Google Search documentation. The evidence snapshot and limitations are in [`references/framework-evidence.md`](references/framework-evidence.md), last reviewed 2026-09-13.
+The bundled research report uses official Next.js and React documentation for capabilities and support status. It distinguishes source-detectable facts from inferences and non-detectable business evidence. See [`references/framework-evidence.md`](references/framework-evidence.md), reviewed **2026-09-14**.
 
-The article [そのプロジェクト、本当にNext.js必要？](https://ashunar0.dev/posts/does-your-project-need-nextjs/) motivated the project. Its claims are treated as hypotheses and checked against current primary sources rather than copied as rules.
+The article [そのプロジェクト、本当にNext.js必要？](https://ashunar0.dev/posts/does-your-project-need-nextjs/) motivated the project. Its arguments are treated as hypotheses, not scoring rules.
+
+## Limits
+
+Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime. The tool therefore never emits `migrate`.
+
+Only npm lockfiles are currently resolved to an exact Next.js version. pnpm, Yarn, and Bun projects retain the declared range and receive a confidence limit until lockfile parsers are added.
 
 ## Contributing
 
-Framework capabilities change quickly. A decision-rule change should include:
+Run the complete check before opening a pull request:
 
-- an official source or a clearly labeled analytical rationale;
-- a test showing the decision that changes;
-- an updated review date when time-sensitive evidence changes.
+```bash
+npm run check
+```
 
-Run `npm test` before opening a pull request.
+A detection or decision change should include a realistic regression fixture, a documented rationale, and an updated evidence date when the underlying framework fact is time-sensitive.
 
 ## License
 

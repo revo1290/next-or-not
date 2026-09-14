@@ -1,7 +1,7 @@
 {
   "name": "next-or-not",
-  "version": "0.1.0",
-  "description": "An evidence-based Next.js fit assessor for humans and coding agents",
+  "version": "0.2.0",
+  "description": "A source-evidence audit for deciding whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery",
   "type": "module",
   "bin": {
     "next-or-not": "scripts/assess.mjs"
@@ -9,7 +9,8 @@
   "scripts": {
     "assess": "node scripts/assess.mjs",
     "test": "node --test",
-    "validate:skill": "python3 /root/.codex/skills/.system/skill-creator/scripts/quick_validate.py ."
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "check": "npm test && npm run validate:skill"
   },
   "engines": {
     "node": ">=20"
@@ -25,7 +26,8 @@
     "architecture",
     "agent-skill",
     "react",
-    "framework-selection"
+    "migration-audit",
+    "static-analysis"
   ],
   "license": "MIT"
 }
