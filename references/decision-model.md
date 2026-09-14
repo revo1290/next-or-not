@@ -53,7 +53,9 @@ Maintenance risk uses a dated evidence snapshot. As reviewed 2026-09-14:
 - 14 and earlier are outside the documented supported versions;
 - official August 2026 patched releases are 16.3.3 and 15.5.24.
 
-An exact version is resolved only from npm lockfiles in v0.2. A declared range such as `^16.0.0` cannot prove the installed patch, so it becomes a confidence limit rather than a security finding.
+Exact versions are resolved independently for every Next.js workspace. The resolver prefers a workspace-installed package, then a root-hoisted installed package, a matching workspace lockfile entry, a root lockfile entry, and finally an exact `package.json` declaration. It supports npm lockfile v1–v3 and shrinkwrap, pnpm importers and package/snapshot structures, Yarn Classic and Berry descriptors, and Bun text locks. The selected source, scope, file, schema version, candidates, and any mismatch are preserved in JSON.
+
+A declared range such as `^16.0.0` cannot prove the installed patch, so it becomes a confidence limit rather than a security finding. A malformed or oversized lockfile is never guessed. Binary `bun.lockb` is reported as unsupported unless the installed-package fallback resolves the version. Multiple Next.js versions remain separate workspace results because combining them could hide an unsupported or pre-release application.
 
 `modernize-first` is triggered by unsupported or pre-release versions, an exact version below the recorded patched release, removed experimental PPR configuration, deprecated `middleware` on Next 16, or `next lint` on Next 16. The tool says “below a documented patched release,” not “vulnerable,” because advisory applicability can depend on features and deployment.
 
@@ -86,7 +88,7 @@ Recommendations are intentionally asymmetric because retaining the current syste
 
 Confidence describes whether the scan had enough trustworthy repository evidence:
 
-- `high`: complete scan, recognized router, exact npm lockfile version, one Next workspace;
+- `high`: complete scan, recognized router, an exact installed/lockfile/declared version for every workspace, and one Next workspace;
 - `medium`: usable result with an unresolved exact version, one or more AST parse failures using the bounded fallback, multiple aggregated Next workspaces, skipped large files, or a stale evidence snapshot;
 - `low`: truncated scan, repeated parse/read errors, or no recognized route structure.
 

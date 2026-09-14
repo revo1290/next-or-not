@@ -38,7 +38,7 @@ Results use `low`, `medium`, and `high` bands rather than probability-looking sc
 The scanner detects:
 
 - Next.js workspaces inside monorepos;
-- declared versions and exact npm lockfile versions;
+- declared versions and exact installed/lockfile versions from npm, pnpm, Yarn, and Bun projects;
 - App Router, Pages Router, and mixed-router applications;
 - pages, layouts, Route Handlers, and Pages API routes;
 - `use client`, `use server`, and `use cache` boundaries;
@@ -52,6 +52,8 @@ The scanner detects:
 Static-export analysis includes request-dependent Route Handlers and dynamic App Router routes with no detected `generateStaticParams` implementation. These are conservative source checks; a real build remains stronger evidence.
 
 JavaScript, TypeScript, JSX, and TSX are parsed with Babel. Comments, ordinary strings, type-only imports, unused imports, and unrelated same-name functions are not treated as runtime evidence. Route Handler Request parameters are counted only when their binding is referenced. Each signal retains summary counts and includes bounded file, line, and `detectionMethod` evidence in JSON output. Parse failures are explicit and use only a limited fallback, which lowers confidence. Generated output, dependencies, and large files are excluded and reported as confidence limits. Parser selection is documented in [`references/adr-001-javascript-parser.md`](references/adr-001-javascript-parser.md).
+
+Version resolution is read-only and workspace-specific. The precedence is: workspace-installed package, root-hoisted installed package, matching workspace lock entry, root lock entry, exact `package.json` declaration, then explicit unresolved status. JSON output records the chosen source, lockfile and schema version, alternative candidates, warnings, and parse failures. Supported inputs are `package-lock.json` v1–v3, `npm-shrinkwrap.json`, current and major older `pnpm-lock.yaml` structures, Yarn Classic and Berry `yarn.lock`, and Bun text `bun.lock`. Installed packages and lockfiles are compared instead of silently choosing one.
 
 ## Recommendation semantics
 
@@ -80,7 +82,7 @@ The article [そのプロジェクト、本当にNext.js必要？](https://ashun
 
 Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime, and it does not perform whole-program data flow across wrapper modules. The tool therefore never emits `migrate`.
 
-Only npm lockfiles are currently resolved to an exact Next.js version. pnpm, Yarn, and Bun projects retain the declared range and receive a confidence limit until lockfile parsers are added.
+Legacy binary `bun.lockb` is identified but not guessed. If no safe installed-package fallback exists, the version remains unresolved with `unsupported-binary-lockfile` provenance. Malformed, oversized, or unsupported lockfiles also remain explicit confidence limits. Installed-package symlinks that resolve outside the scanned repository are not followed.
 
 ## Contributing
 
