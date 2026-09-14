@@ -1,6 +1,6 @@
 {
   "name": "next-or-not",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A source-evidence audit for deciding whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery",
   "type": "module",
   "bin": {

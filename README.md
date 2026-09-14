@@ -20,6 +20,32 @@ For machine-readable evidence:
 node scripts/assess.mjs /path/to/existing-next-app --json
 ```
 
+Add the seven non-code facts that can change the action without replacing repository evidence:
+
+```bash
+node scripts/assess.mjs /path/to/existing-next-app --context context.json
+node scripts/assess.mjs /path/to/existing-next-app --interactive
+```
+
+`--interactive` prompts only in a TTY and skips fields already supplied by `--context`. A context file may contain the fields directly or below `answers`:
+
+```json
+{
+  "answers": {
+    "reviewDriver": "開発速度",
+    "evidenceStrength": "継続的な計測",
+    "productionRouteProfile": "mixed",
+    "deploymentConstraint": "Node / container",
+    "serverCapabilityCriticality": "重要だが代替可能",
+    "roadmapDirection": "現状維持",
+    "changeCapacity": "小さなspikeのみ"
+  },
+  "note": "Additional facts belong in this one free-form note."
+}
+```
+
+Every field accepts `unknown`; blank interactive answers become `unknown`. Invalid values are also converted to `unknown` with a structured validation error instead of affecting the recommendation.
+
 ## What changed in v0.2
 
 The first version ranked frameworks using user-supplied answers and additive scores. That was explainable, but too sensitive to subjective inputs and arbitrary weights. v0.2 instead audits four independent dimensions:
@@ -67,6 +93,12 @@ Version resolution is read-only and workspace-specific. The precedence is: works
 | `not-applicable` | No `next` dependency was found. |
 
 The detailed derivation and known blind spots are in [`references/decision-model.md`](references/decision-model.md).
+
+## Seven-question human evidence supplement
+
+The seven fields are fixed: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Additional information goes into `note`, not an eighth scored question.
+
+Raw answers, derived implications, code/context contradictions, validation errors, and the recommendation before/after integration are separate in JSON. Answers cannot erase code evidence or independently create `migration-candidate`. Low-strength pain remains a measurement task; static-only deployment conflicting with request-time code becomes a configuration investigation; and unavailable migration capacity constrains action to reversible simplification.
 
 ## Agent skill
 
