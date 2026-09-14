@@ -4,7 +4,7 @@
 
 > Should this application keep Next.js, simplify its Next-specific surface, modernize first, or become a candidate for measured migration discovery?
 
-It is a zero-dependency, read-only static analyzer plus an installable agent skill. It does not execute project code, upload source, or authorize a rewrite.
+It is a read-only AST analyzer plus an installable agent skill. It does not execute project code, package scripts, upload source, or authorize a rewrite.
 
 ## Quick start
 
@@ -42,7 +42,7 @@ The scanner detects:
 - App Router, Pages Router, and mixed-router applications;
 - pages, layouts, Route Handlers, and Pages API routes;
 - `use client`, `use server`, and `use cache` boundaries;
-- imports from `next/headers`, `next/cache`, `next/server`, `next/navigation`, `next/image`, `next/font`, `next/link`, and `next/script`;
+- used bindings and re-exports from `next/headers`, `next/cache`, `next/server`, `next/navigation`, `next/image`, `next/font`, `next/link`, and `next/script`, including aliases, multiline declarations, dynamic imports, and CommonJS `require`;
 - `getServerSideProps`, `getStaticProps`, `getStaticPaths`, and `getInitialProps`;
 - proxy, deprecated middleware, instrumentation, custom servers, route runtime and revalidation settings;
 - static export, standalone output, Cache Components, image loader choices, rewrites, redirects, headers, custom webpack, and removed experimental PPR configuration;
@@ -51,7 +51,7 @@ The scanner detects:
 
 Static-export analysis includes request-dependent Route Handlers and dynamic App Router routes with no detected `generateStaticParams` implementation. These are conservative source checks; a real build remains stronger evidence.
 
-Each signal includes file counts and bounded path examples in JSON output. Generated output, dependencies, and large files are excluded and reported as confidence limits.
+JavaScript, TypeScript, JSX, and TSX are parsed with Babel. Comments, ordinary strings, type-only imports, unused imports, and unrelated same-name functions are not treated as runtime evidence. Route Handler Request parameters are counted only when their binding is referenced. Each signal retains summary counts and includes bounded file, line, and `detectionMethod` evidence in JSON output. Parse failures are explicit and use only a limited fallback, which lowers confidence. Generated output, dependencies, and large files are excluded and reported as confidence limits. Parser selection is documented in [`references/adr-001-javascript-parser.md`](references/adr-001-javascript-parser.md).
 
 ## Recommendation semantics
 
@@ -78,7 +78,7 @@ The article [そのプロジェクト、本当にNext.js必要？](https://ashun
 
 ## Limits
 
-Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime. The tool therefore never emits `migrate`.
+Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime, and it does not perform whole-program data flow across wrapper modules. The tool therefore never emits `migrate`.
 
 Only npm lockfiles are currently resolved to an exact Next.js version. pnpm, Yarn, and Bun projects retain the declared range and receive a confidence limit until lockfile parsers are added.
 

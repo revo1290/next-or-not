@@ -175,3 +175,107 @@ test('treats a stale evidence snapshot as a confidence limit', async (t) => {
   assert.equal(stale.confidence.level, 'medium');
   assert.match(stale.confidence.basis.join(' '), /stale/);
 });
+
+test('tracks alias bindings and ignores unused, type-only, comment, string, and shadowed names', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': [
+      "import { cookies as readCookies, type UnsafeUnwrappedCookies } from 'next/headers'",
+      "import { revalidateTag } from 'next/cache'",
+      "import type { Metadata } from 'next'",
+      "// cookies() and revalidateTag('comment') are not evidence",
+      "const prose = \"cookies() from next/headers\"",
+      'function cookies() { return prose }',
+      'export default async function Page() { return String((await readCookies()).size) }',
+    ].join('\n'),
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.features.requestBoundApis.files, 1);
+  assert.equal(result.signals.features.requestBoundApis.evidence[0].line, 1);
+  assert.equal(result.signals.features.cacheApis.files, 0);
+  assert.equal(result.signals.analysis.unusedNextImports.length, 3);
+  assert.deepEqual(new Set(result.signals.analysis.unusedNextImports.map((item) => item.reason)), new Set(['type-only', 'unreferenced']));
+});
+
+test('detects multiline imports, dynamic imports, require, and re-exports through the AST', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'pages/index.tsx': [
+      'import {',
+      '  useRouter as navigate',
+      "} from 'next/router'",
+      "export { Image as OptimizedImage } from 'next/image'",
+      "const loadServer = () => import('next/server')",
+      "const Link = require('next/link')",
+      'export default function Page() { navigate(); return Link && loadServer }',
+    ].join('\n'),
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.features.navigationApis.files, 1);
+  assert.equal(result.signals.features.imageComponent.files, 1);
+  assert.equal(result.signals.features.nextServerApis.files, 1);
+  assert.equal(result.signals.features.linkComponent.files, 1);
+  assert.equal(result.signals.features.nextImports.count, 4);
+  assert.ok(result.signals.features.nextImports.evidence.every((item) => item.detectionMethod === 'ast'));
+});
+
+test('uses exported bindings for route handlers and distinguishes used request parameters', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/used/route.ts': [
+      'const handler = async (incoming: Request) => Response.json({ url: incoming.url })',
+      'export { handler as GET }',
+    ].join('\n'),
+    'app/unused/route.ts': 'export const POST = async (request: Request) => Response.json({ ok: true })',
+    'app/reexport/route.ts': "export { GET } from '../shared-handler'",
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.routes.appRouteHandlers.files, 3);
+  assert.equal(result.signals.features.requestDependentRouteHandlers.files, 1);
+  assert.equal(result.signals.features.requestDependentRouteHandlers.examples[0], 'app/used/route.ts');
+});
+
+test('detects Pages Router data exports and App Router segment config without regex naming collisions', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'pages/index.tsx': [
+      'const load = async () => ({ props: {} })',
+      'export { load as getServerSideProps }',
+      'const getStaticPropsLabel = true',
+      'export default function Page() { return getStaticPropsLabel }',
+    ].join('\n'),
+    'app/[slug]/page.tsx': [
+      "export const runtime = 'edge'",
+      'export const revalidate = 60',
+      'export const dynamicParams = true',
+      'const build = async () => [{ slug: "a" }]',
+      'export { build as generateStaticParams }',
+      'export default function Page() { return null }',
+    ].join('\n'),
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.features.serverSideProps.files, 1);
+  assert.equal(result.signals.features.staticProps.files, 0);
+  assert.equal(result.signals.features.routeRuntimeConfig.files, 1);
+  assert.equal(result.signals.features.routeRevalidation.files, 1);
+  assert.equal(result.signals.features.dynamicParamsEnabled.files, 1);
+  assert.equal(result.signals.features.staticParams.files, 1);
+});
+
+test('records parse failures, uses only the bounded fallback, and lowers confidence', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': "import { cookies } from 'next/headers'\nexport default function Page( {",
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.analysis.failedFiles, 1);
+  assert.equal(result.signals.analysis.fallbackFiles, 1);
+  assert.equal(result.signals.features.requestBoundApis.evidence[0].detectionMethod, 'regex-fallback');
+  assert.equal(result.audit.confidence.level, 'medium');
+  assert.match(result.audit.confidence.basis.join(' '), /AST parsing failed/);
+});
