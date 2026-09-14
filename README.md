@@ -110,6 +110,20 @@ The bundled research report uses official Next.js and React documentation for ca
 
 The article [そのプロジェクト、本当にNext.js必要？](https://ashunar0.dev/posts/does-your-project-need-nextjs/) motivated the project. Its arguments are treated as hypotheses, not scoring rules.
 
+## Real-world calibration
+
+`dataset/real-world.json` freezes 30 public Next.js repositories at full commit SHAs. The set covers App Router, Pages Router, mixed and content-oriented applications; server routes; single-package and monorepo layouts; npm, pnpm, Yarn and Bun; and supported, unsupported and pre-release versions. Every record includes license provenance, workspace, expected version/router/features, four independently assigned expert labels, an allowed recommendation set, rationale, review status and known ambiguity.
+
+The labels were recorded before running this tool. The evaluator retains disagreements and reports signal precision/recall, parser and lockfile failures, router/dimension/recommendation agreement, dangerous-error rate, confidence calibration and slices by router, package manager, project size and support class. It only fetches pinned Git objects and reads source; it never installs dependencies or executes repository code.
+
+```bash
+npm run dataset:validate              # offline manifest and coverage checks
+npm run dataset:smoke                 # seven-repository CI subset
+npm run dataset:full                  # all 30, writes JSON plus the baseline report
+```
+
+Pull requests run the fixed smoke set. A scheduled or manually dispatched workflow runs the complete set. The initial results and label-disagreement policy are documented in [`references/calibration-baseline.md`](references/calibration-baseline.md).
+
 ## Limits
 
 Static analysis cannot establish production latency, traffic shape, cache hit rates, infrastructure cost, incidents, team productivity, roadmap, or migration budget. It also cannot prove deployed rendering behavior without observing a build and runtime, and it does not perform whole-program data flow across wrapper modules. The tool therefore never emits `migrate`.
@@ -125,6 +139,8 @@ npm run check
 ```
 
 A detection or decision change should include a realistic regression fixture, a documented rationale, and an updated evidence date when the underlying framework fact is time-sensitive.
+
+Changes must keep the dangerous-error gate at zero. A dangerous error is a migration-candidate result for a high keep-value case, understated unsupported/pre-release maintenance risk, or an actionable result emitted with low scan confidence.
 
 ## License
 
