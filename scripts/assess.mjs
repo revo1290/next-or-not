@@ -5,6 +5,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { analyzeSourceAst, analyzeSourceFallback } from './analyzers/ast.mjs';
+
 const IGNORED = new Set([
   '.git', '.next', '.nuxt', '.output', '.turbo', 'build', 'coverage', 'dist',
   'node_modules', 'out', 'storybook-static', 'target', 'vendor',
@@ -23,7 +25,9 @@ export const EVIDENCE_SNAPSHOT = {
 };
 
 function feature() {
-  return { count: 0, files: 0, examples: [] };
+  const result = { count: 0, files: 0, examples: [], evidence: [] };
+  Object.defineProperty(result, '_files', { value: new Set(), enumerable: false });
+  return result;
 }
 
 function emptySignals() {
@@ -35,6 +39,10 @@ function emptySignals() {
     sourceFilesSkippedLarge: 0,
     readErrors: 0,
     truncated: false,
+    analysis: {
+      parser: '@babel/parser', parsedFiles: 0, fallbackFiles: 0, failedFiles: 0,
+      failures: [], unusedNextImports: [],
+    },
     router: 'unknown',
     routes: {
       appPages: feature(),
@@ -99,15 +107,21 @@ function isInside(target, scope) {
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
-function countMatches(text, pattern) {
-  return [...text.matchAll(pattern)].length;
-}
-
-function addFeature(target, rel, count = 1) {
+function addFeature(target, rel, count = 1, detail = {}) {
   if (!count) return;
   target.count += count;
-  target.files += 1;
-  if (target.examples.length < MAX_EXAMPLES) target.examples.push(rel);
+  const newFile = !target._files.has(rel);
+  if (newFile) {
+    target._files.add(rel);
+    target.files += 1;
+    if (target.examples.length < MAX_EXAMPLES) target.examples.push(rel);
+  }
+  if (target.evidence.length < 25) target.evidence.push({
+    file: rel,
+    line: detail.line ?? null,
+    detectionMethod: detail.detectionMethod ?? 'filesystem',
+    ...(detail.detail ? { detail: detail.detail } : {}),
+  });
 }
 
 function parseMajor(version) {
@@ -145,17 +159,6 @@ async function findResolvedNpmVersion(root, projectRoot) {
   } catch { return null; }
 }
 
-function importModules(text) {
-  const modules = new Set();
-  const patterns = [
-    /(?:import|export)\s+(?:[^'";]+?\s+from\s+)?['"](next(?:\/[^'"]*)?)['"]/g,
-    /import\(\s*['"](next(?:\/[^'"]*)?)['"]\s*\)/g,
-    /require\(\s*['"](next(?:\/[^'"]*)?)['"]\s*\)/g,
-  ];
-  for (const pattern of patterns) for (const match of text.matchAll(pattern)) modules.add(match[1]);
-  return modules;
-}
-
 function isAppFile(rel, namePattern = '.+') {
   return new RegExp(`^(?:src/)?app/(?:.+/)?${namePattern}\\.(?:js|jsx|ts|tsx)$`).test(rel);
 }
@@ -164,17 +167,8 @@ function isPagesFile(rel) {
   return /^(?:src\/)?pages\/.+\.(?:js|jsx|ts|tsx)$/.test(rel);
 }
 
-function configFlags(text, config) {
-  config.staticExport ||= /\boutput\s*:\s*['"]export['"]/.test(text);
-  config.standaloneOutput ||= /\boutput\s*:\s*['"]standalone['"]/.test(text);
-  config.cacheComponents ||= /\bcacheComponents\s*:\s*true/.test(text);
-  config.customImageLoader ||= /\bloader\s*:\s*['"]custom['"]|\bloaderFile\s*:/.test(text);
-  config.imagesUnoptimized ||= /\bunoptimized\s*:\s*true/.test(text);
-  config.rewrites ||= /\brewrites\s*(?::|\()/.test(text);
-  config.redirects ||= /\bredirects\s*(?::|\()/.test(text);
-  config.headers ||= /\bheaders\s*(?::|\()/.test(text);
-  config.customWebpack ||= /\bwebpack\s*(?::|\()/.test(text);
-  config.experimentalPpr ||= /\bexperimental_ppr\b|\bexperimental\s*:\s*\{[^}]*\bppr\s*:/s.test(text);
+function applyConfigFlags(source, target) {
+  for (const [name, value] of Object.entries(source)) if (value === true) target[name] = true;
 }
 
 export async function scanProject(projectPath = '.') {
@@ -215,11 +209,10 @@ export async function scanProject(projectPath = '.') {
     if (/^(?:src\/)?(?:middleware|proxy)\.(?:js|ts)$/.test(rel)) addFeature(rel.includes('proxy.') ? signals.features.proxy : signals.features.middleware, rootRel);
     if (/^(?:src\/)?instrumentation(?:-client)?\.(?:js|ts)$/.test(rel)) addFeature(signals.features.instrumentation, rootRel);
     if (/^server\.(?:js|mjs|cjs|ts)$/.test(rel)) addFeature(signals.features.customServer, rootRel);
-    if (/^next\.config\.(?:js|mjs|cjs|ts)$/.test(rel)) {
+    const configFile = /^next\.config\.(?:js|mjs|cjs|ts)$/.test(rel);
+    if (configFile) {
       signals.config.found = true;
       signals.config.examples.push(rootRel);
-      try { configFlags(await fs.readFile(file, 'utf8'), signals.config); } catch { signals.readErrors += 1; }
-      continue;
     }
     if (!SOURCE_EXTENSIONS.has(path.extname(file))) continue;
     let stat;
@@ -227,48 +220,99 @@ export async function scanProject(projectPath = '.') {
     if (stat.size > MAX_FILE_BYTES) { signals.sourceFilesSkippedLarge += 1; continue; }
     let text;
     try { text = await fs.readFile(file, 'utf8'); } catch { signals.readErrors += 1; continue; }
-    signals.sourceFiles += 1;
+    if (!configFile) signals.sourceFiles += 1;
 
     const appFile = /^(?:src\/)?app\//.test(rel);
     const pagesFile = isPagesFile(rel);
     if (isAppFile(rel, 'page')) addFeature(signals.routes.appPages, rootRel);
     if (isAppFile(rel, 'layout')) addFeature(signals.routes.appLayouts, rootRel);
-    if (isAppFile(rel, 'route') && /export\s+(?:(?:async\s+)?function|const)\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\b/m.test(text)) {
-      addFeature(signals.routes.appRouteHandlers, rootRel);
-      const requestParam = text.match(/export\s+(?:async\s+)?function\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*\(\s*([A-Za-z_$][\w$]*)/)?.[1]
-        ?? text.match(/export\s+const\s+(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*=\s*(?:async\s*)?\(?\s*([A-Za-z_$][\w$]*)/)?.[1];
-      if (requestParam && countMatches(text, new RegExp(`\\b${requestParam}\\b`, 'g')) > 1) addFeature(signals.features.requestDependentRouteHandlers, rootRel);
-    }
     if (pagesFile && /^(?:src\/)?pages\/api\//.test(rel)) addFeature(signals.routes.pagesApiRoutes, rootRel);
     else if (pagesFile && !/\/(?:_app|_document|_error)\.(?:js|jsx|ts|tsx)$/.test(rel)) addFeature(signals.routes.pagesRoutes, rootRel);
     if (appFile && /(?:^|\/)\(\.\.\)|(?:^|\/)\(\.\)|(?:^|\/)@[^/]+\//.test(rel)) addFeature(signals.features.interceptingRoutes, rootRel);
     if (appFile && /\[[^/]+\]/.test(rel) && /\/(?:page|route)\.(?:js|jsx|ts|tsx)$/.test(rel)) addFeature(signals.features.dynamicAppRoutes, rootRel);
 
-    const modules = importModules(text);
-    if (modules.size) addFeature(signals.features.nextImports, rootRel, modules.size);
-    if (modules.has('next/headers')) addFeature(signals.features.requestBoundApis, rootRel);
-    if (modules.has('next/cache')) addFeature(signals.features.cacheApis, rootRel);
-    if (modules.has('next/server')) addFeature(signals.features.nextServerApis, rootRel);
-    if (modules.has('next/navigation') || modules.has('next/router')) addFeature(signals.features.navigationApis, rootRel);
-    if (modules.has('next/image')) addFeature(signals.features.imageComponent, rootRel);
-    if ([...modules].some((module) => module.startsWith('next/font/'))) addFeature(signals.features.fontOptimization, rootRel);
-    if (modules.has('next/link')) addFeature(signals.features.linkComponent, rootRel);
-    if (modules.has('next/script')) addFeature(signals.features.scriptComponent, rootRel);
-    if (/(?:import\s+['"]server-only['"]|require\(\s*['"]server-only['"]\s*\))/.test(text)) addFeature(signals.features.serverOnlyModules, rootRel);
-    if (modules.has('next') && /^server\.(?:js|mjs|cjs|ts)$/.test(rel)) addFeature(signals.features.customServer, rootRel);
+    let analysis;
+    try {
+      analysis = analyzeSourceAst(text, rootRel);
+      signals.analysis.parsedFiles += 1;
+    } catch (error) {
+      analysis = analyzeSourceFallback(text);
+      signals.analysis.fallbackFiles += 1;
+      signals.analysis.failedFiles += 1;
+      if (signals.analysis.failures.length < 100) signals.analysis.failures.push({
+        file: rootRel,
+        message: error.message,
+        detectionMethod: 'regex-fallback',
+      });
+    }
+    const method = analysis.detectionMethod;
+    if (configFile) {
+      applyConfigFlags(analysis.config, signals.config);
+      continue;
+    }
 
-    addFeature(signals.features.clientDirectives, rootRel, countMatches(text, /^[\t ]*['"]use client['"];?/gm));
-    addFeature(signals.features.serverDirectives, rootRel, countMatches(text, /^[\t ]*['"]use server['"];?/gm));
-    addFeature(signals.features.cacheDirectives, rootRel, countMatches(text, /^[\t ]*['"]use cache(?:: (?:private|remote))?['"];?/gm));
-    if (appFile && /\bexport\s+(?:async\s+function\s+generateMetadata|const\s+metadata\b|function\s+generateMetadata)/m.test(text)) addFeature(signals.features.metadataApis, rootRel);
-    if (appFile && /\bexport\s+(?:async\s+)?function\s+generateStaticParams\b|\bexport\s+const\s+generateStaticParams\b/m.test(text)) addFeature(signals.features.staticParams, rootRel);
-    if (pagesFile && /\bexport\s+(?:const|async\s+function|function)\s+getServerSideProps\b/m.test(text)) addFeature(signals.features.serverSideProps, rootRel);
-    if (pagesFile && /\bexport\s+(?:const|async\s+function|function)\s+getStaticProps\b/m.test(text)) addFeature(signals.features.staticProps, rootRel);
-    if (pagesFile && /\bexport\s+(?:const|async\s+function|function)\s+getStaticPaths\b/m.test(text)) addFeature(signals.features.staticPaths, rootRel);
-    if (pagesFile && /\bgetInitialProps\s*=|\.getInitialProps\s*=|\bstatic\s+(?:async\s+)?getInitialProps\b/m.test(text)) addFeature(signals.features.initialProps, rootRel);
-    if (appFile && /\bexport\s+const\s+runtime\s*=/.test(text)) addFeature(signals.features.routeRuntimeConfig, rootRel);
-    if (appFile && /\bexport\s+const\s+revalidate\s*=/.test(text)) addFeature(signals.features.routeRevalidation, rootRel);
-    if (appFile && /\bexport\s+const\s+dynamicParams\s*=\s*true\b/.test(text)) addFeature(signals.features.dynamicParamsEnabled, rootRel);
+    for (const item of analysis.unusedImports) {
+      if ((item.module === 'next' || item.module.startsWith('next/')) && signals.analysis.unusedNextImports.length < 100) {
+        signals.analysis.unusedNextImports.push({ file: rootRel, ...item, detectionMethod: method });
+      }
+    }
+
+    const importsByModule = new Map();
+    for (const item of analysis.imports) {
+      const items = importsByModule.get(item.module) ?? [];
+      items.push(item);
+      importsByModule.set(item.module, items);
+    }
+    const nextModules = [...importsByModule.keys()].filter((name) => name === 'next' || name.startsWith('next/'));
+    if (nextModules.length) addFeature(signals.features.nextImports, rootRel, nextModules.length, {
+      line: nextModules.flatMap((name) => importsByModule.get(name)).find((item) => item.line)?.line ?? null,
+      detectionMethod: method,
+      detail: nextModules.join(', '),
+    });
+    const addModuleFeature = (name, target) => {
+      const items = importsByModule.get(name);
+      if (items?.length) addFeature(target, rootRel, items.length, { line: items[0].line, detectionMethod: method, detail: name });
+    };
+    addModuleFeature('next/headers', signals.features.requestBoundApis);
+    addModuleFeature('next/cache', signals.features.cacheApis);
+    addModuleFeature('next/server', signals.features.nextServerApis);
+    if (importsByModule.has('next/navigation') || importsByModule.has('next/router')) {
+      const item = importsByModule.get('next/navigation')?.[0] ?? importsByModule.get('next/router')[0];
+      addFeature(signals.features.navigationApis, rootRel, 1, { line: item.line, detectionMethod: method, detail: item.module });
+    }
+    addModuleFeature('next/image', signals.features.imageComponent);
+    const fontImport = analysis.imports.find((item) => item.module.startsWith('next/font/'));
+    if (fontImport) addFeature(signals.features.fontOptimization, rootRel, 1, { line: fontImport.line, detectionMethod: method, detail: fontImport.module });
+    addModuleFeature('next/link', signals.features.linkComponent);
+    addModuleFeature('next/script', signals.features.scriptComponent);
+    addModuleFeature('server-only', signals.features.serverOnlyModules);
+    if (importsByModule.has('next') && /^server\.(?:js|mjs|cjs|ts)$/.test(rel)) {
+      addFeature(signals.features.customServer, rootRel, 1, { line: importsByModule.get('next')[0].line, detectionMethod: method });
+    }
+
+    for (const directive of analysis.directives) {
+      const detail = { line: directive.line, detectionMethod: method, detail: directive.value };
+      if (directive.value === 'use client') addFeature(signals.features.clientDirectives, rootRel, 1, detail);
+      else if (directive.value === 'use server') addFeature(signals.features.serverDirectives, rootRel, 1, detail);
+      else if (/^use cache(?:: (?:private|remote))?$/.test(directive.value)) addFeature(signals.features.cacheDirectives, rootRel, 1, detail);
+    }
+
+    if (isAppFile(rel, 'route') && analysis.routeHandlers.length) {
+      addFeature(signals.routes.appRouteHandlers, rootRel, analysis.routeHandlers.length, {
+        line: analysis.routeHandlers[0].line, detectionMethod: method,
+        detail: analysis.routeHandlers.map((item) => item.name).join(', '),
+      });
+    }
+    for (const item of analysis.exportedFeatures) {
+      const permitted = item.name === 'requestDependentRouteHandlers' ? isAppFile(rel, 'route')
+        : ['serverSideProps', 'staticProps', 'staticPaths'].includes(item.name) ? pagesFile
+          : ['metadataApis', 'staticParams', 'routeRuntimeConfig', 'routeRevalidation', 'dynamicParamsEnabled'].includes(item.name) ? appFile
+            : true;
+      if (permitted) addFeature(signals.features[item.name], rootRel, 1, { line: item.line, detectionMethod: method });
+    }
+    if (pagesFile) for (const line of analysis.initialProps) {
+      addFeature(signals.features.initialProps, rootRel, 1, { line, detectionMethod: method });
+    }
   }
 
   const appRoutes = signals.routes.appPages.files + signals.routes.appLayouts.files + signals.routes.appRouteHandlers.files;
@@ -379,11 +423,13 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   const confidenceBasis = [];
   if (signals.truncated) confidenceBasis.push(`File scan stopped at ${MAX_FILES} files.`);
   if (signals.readErrors) confidenceBasis.push(`${signals.readErrors} file(s) could not be parsed or read.`);
+  if (signals.analysis?.failedFiles) confidenceBasis.push(`AST parsing failed for ${signals.analysis.failedFiles} source file(s); only bounded fallback evidence was retained.`);
   if (signals.sourceFilesSkippedLarge) confidenceBasis.push(`${signals.sourceFilesSkippedLarge} source file(s) exceeded the size limit.`);
   if (signals.nextProjects.length > 1) confidenceBasis.push(`${signals.nextProjects.length} Next.js workspaces were aggregated; audit each workspace separately for a final decision.`);
   if (signals.router === 'unknown') confidenceBasis.push('No App Router or Pages Router route files were identified.');
   if (!support.some((project) => project.resolvedVersion)) confidenceBasis.push('No exact installed Next.js version was resolved from package-lock.json.');
-  let confidenceLevel = signals.truncated || signals.readErrors > 5 || signals.router === 'unknown' ? 'low' : confidenceBasis.length ? 'medium' : 'high';
+  let confidenceLevel = signals.truncated || signals.readErrors > 5 || (signals.analysis?.failedFiles ?? 0) > 5 || signals.router === 'unknown'
+    ? 'low' : confidenceBasis.length ? 'medium' : 'high';
   if (now > new Date(`${EVIDENCE_SNAPSHOT.refreshAfter}T23:59:59Z`)) {
     confidenceBasis.push(`Framework support evidence is stale after ${EVIDENCE_SNAPSHOT.refreshAfter}.`);
     if (confidenceLevel === 'high') confidenceLevel = 'medium';
@@ -413,6 +459,7 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   const unknowns = [
     'Repository scanning cannot establish production traffic, user-visible latency, hosting spend, incident rate, or team delivery pain.',
     'Source patterns do not prove which routes execute dynamically in the deployed build.',
+    signals.analysis?.failedFiles ? 'Files that failed AST parsing may contain undetected bindings, exports, directives, or configuration.' : null,
     !support.some((project) => project.resolvedVersion) ? 'The installed Next.js patch version is unknown without a supported lockfile resolution.' : null,
     signals.nextProjects.length > 1 ? 'Aggregated monorepo results can hide materially different application profiles.' : null,
   ].filter(Boolean);
@@ -427,7 +474,7 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   nextSteps.push('Add project evidence for hosting constraints, operational pain, and migration budget before authorizing a rewrite.');
 
   return {
-    applicable: true, recommendation, confidence: { level: confidenceLevel, basis: confidenceBasis.length ? confidenceBasis : ['Complete source scan, recognized router, and exact npm lockfile version.'] },
+    applicable: true, recommendation, confidence: { level: confidenceLevel, basis: confidenceBasis.length ? confidenceBasis : ['Complete AST source scan, recognized router, and exact npm lockfile version.'] },
     summary: { keepValue: frameworkValueLevel, migrationCoupling: migrationCouplingLevel, maintenanceRisk: maintenanceRiskLevel, portabilityOpportunity: portabilityLevel },
     profile: {
       router: signals.router, nextProjects: support, routeFiles, strongServerFiles, serverCapabilityCategories: serverCategoryCount,
@@ -483,7 +530,7 @@ export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) { process.stdout.write(`${usage()}\n`); return; }
   const { root, signals } = await scanProject(args.projectPath);
-  const result = { schemaVersion: 2, generatedAt: new Date().toISOString(), evidenceSnapshot: EVIDENCE_SNAPSHOT, projectRoot: root, continuation: auditContinuation(signals), scan: signals };
+  const result = { schemaVersion: 3, generatedAt: new Date().toISOString(), evidenceSnapshot: EVIDENCE_SNAPSHOT, projectRoot: root, continuation: auditContinuation(signals), scan: signals };
   process.stdout.write(args.json ? `${JSON.stringify(result, null, 2)}\n` : `${formatHuman(result)}\n`);
 }
 

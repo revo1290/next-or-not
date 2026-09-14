@@ -14,7 +14,7 @@ The model separates observed facts, bounded inferences, and facts that static an
 | Inferred | server integration is material, app is static/client-leaning | Must name its observed basis |
 | Unknown | production cost, latency, incidents, delivery friction, roadmap | Must be supplied or measured before migration authorization |
 
-Counts are based on unique files where possible. Path examples are capped so JSON remains usable. A repository-wide ratio is used only when at least ten or twenty source files exist; this prevents a two-file fixture from looking “100% deeply coupled.”
+Counts are based on unique files where possible. Path examples are capped so JSON remains usable. AST detections include file, line, and method; unused and type-only Next.js imports are retained separately for auditability and do not contribute runtime evidence. A repository-wide ratio is used only when at least ten or twenty source files exist; this prevents a two-file fixture from looking “100% deeply coupled.”
 
 ## Four independent dimensions
 
@@ -66,7 +66,7 @@ Portability is `high` when either:
 
 It is `low` when keep value is high. Otherwise it is medium or low according to the available evidence.
 
-The static-export checks cover detectable members of the official unsupported list: request-bound APIs, Server Actions, proxy/middleware, rewrites, redirects, headers, ISR/revalidation, intercepting routes, Pages API routes, default `next/image` optimization, Request-dependent Route Handlers, and dynamic routes when no `generateStaticParams` exists anywhere in the scanned app. Complete dynamic-parameter coverage and aliased/wrapped APIs still need deeper semantic analysis.
+The static-export checks cover detectable members of the official unsupported list: request-bound APIs, Server Actions, proxy/middleware, rewrites, redirects, headers, ISR/revalidation, intercepting routes, Pages API routes, default `next/image` optimization, Request-dependent Route Handlers, and dynamic routes when no `generateStaticParams` exists anywhere in the scanned app. Import aliases and local Request bindings are tracked. Complete dynamic-parameter coverage and APIs hidden behind cross-file wrappers still need deeper semantic analysis.
 
 ## Recommendation state machine
 
@@ -87,8 +87,8 @@ Recommendations are intentionally asymmetric because retaining the current syste
 Confidence describes whether the scan had enough trustworthy repository evidence:
 
 - `high`: complete scan, recognized router, exact npm lockfile version, one Next workspace;
-- `medium`: usable result with an unresolved exact version, multiple aggregated Next workspaces, skipped large files, or a stale evidence snapshot;
-- `low`: truncated scan, repeated read errors, or no recognized route structure.
+- `medium`: usable result with an unresolved exact version, one or more AST parse failures using the bounded fallback, multiple aggregated Next workspaces, skipped large files, or a stale evidence snapshot;
+- `low`: truncated scan, repeated parse/read errors, or no recognized route structure.
 
 Confidence never means “80% likely to be correct.” Business evidence can reverse a high-coverage repository conclusion.
 
