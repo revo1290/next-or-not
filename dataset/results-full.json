@@ -1,0 +1,2688 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-14T06:48:29.804Z",
+  "totalSelected": 30,
+  "totalEvaluated": 30,
+  "cloneOrScanFailures": [],
+  "metrics": {
+    "signals": {
+      "truePositive": 58,
+      "falsePositive": 0,
+      "falseNegative": 1,
+      "trueNegative": 59,
+      "precision": 1,
+      "recall": 0.9831
+    },
+    "routerAccuracy": 1,
+    "dimensionAccuracy": 0.8417,
+    "recommendationAccuracy": 0.8667,
+    "parserFailureRate": 0.0019,
+    "lockfileFailureRate": 0.0333,
+    "dangerousErrorRate": 0,
+    "confidenceCalibration": {
+      "high": {
+        "total": 15,
+        "recommendationAccuracy": 0.8667
+      },
+      "medium": {
+        "total": 14,
+        "recommendationAccuracy": 0.9286
+      },
+      "low": {
+        "total": 1,
+        "recommendationAccuracy": 0
+      }
+    }
+  },
+  "slices": {
+    "router": {
+      "app": {
+        "total": 22,
+        "recommendationAccuracy": 0.8636,
+        "dangerousErrors": 0
+      },
+      "pages": {
+        "total": 5,
+        "recommendationAccuracy": 0.8,
+        "dangerousErrors": 0
+      },
+      "mixed": {
+        "total": 3,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      }
+    },
+    "packageManager": {
+      "npm": {
+        "total": 4,
+        "recommendationAccuracy": 0.75,
+        "dangerousErrors": 0
+      },
+      "pnpm": {
+        "total": 17,
+        "recommendationAccuracy": 0.8235,
+        "dangerousErrors": 0
+      },
+      "yarn": {
+        "total": 6,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      },
+      "bun": {
+        "total": 3,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      }
+    },
+    "projectSize": {
+      "small": {
+        "total": 9,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      },
+      "medium": {
+        "total": 8,
+        "recommendationAccuracy": 0.75,
+        "dangerousErrors": 0
+      },
+      "large": {
+        "total": 13,
+        "recommendationAccuracy": 0.8462,
+        "dangerousErrors": 0
+      }
+    },
+    "supportClass": {
+      "supported": {
+        "total": 25,
+        "recommendationAccuracy": 0.84,
+        "dangerousErrors": 0
+      },
+      "unsupported": {
+        "total": 3,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      },
+      "pre-release": {
+        "total": 2,
+        "recommendationAccuracy": 1,
+        "dangerousErrors": 0
+      }
+    }
+  },
+  "disagreements": [
+    {
+      "id": "calcom-web",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "documenso-docs",
+      "kind": "dimension",
+      "field": "migrationCoupling",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "formbricks-web",
+      "kind": "recommendation",
+      "field": "recommendation",
+      "expected": [
+        "keep"
+      ],
+      "actual": "insufficient-evidence"
+    },
+    {
+      "id": "supabase-www",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "shadcn-v4",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "openstatus-web",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "low",
+      "actual": "medium"
+    },
+    {
+      "id": "dokploy-app",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "medium",
+      "actual": "low"
+    },
+    {
+      "id": "ixartz-boilerplate",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "ixartz-boilerplate",
+      "kind": "dimension",
+      "field": "migrationCoupling",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "precedent",
+      "kind": "dimension",
+      "field": "portabilityOpportunity",
+      "expected": "low",
+      "actual": "high"
+    },
+    {
+      "id": "babylon-documentation",
+      "kind": "signal",
+      "field": "config.staticExport",
+      "expected": true,
+      "actual": false
+    },
+    {
+      "id": "babylon-documentation",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "low",
+      "actual": "medium"
+    },
+    {
+      "id": "babylon-documentation",
+      "kind": "dimension",
+      "field": "migrationCoupling",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "babylon-documentation",
+      "kind": "dimension",
+      "field": "portabilityOpportunity",
+      "expected": "high",
+      "actual": "low"
+    },
+    {
+      "id": "babylon-documentation",
+      "kind": "recommendation",
+      "field": "recommendation",
+      "expected": [
+        "migration-candidate",
+        "keep-and-simplify"
+      ],
+      "actual": "keep"
+    },
+    {
+      "id": "react-email-web",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "high",
+      "actual": "medium"
+    },
+    {
+      "id": "saleor-storefront",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "low",
+      "actual": "high"
+    },
+    {
+      "id": "saleor-storefront",
+      "kind": "recommendation",
+      "field": "recommendation",
+      "expected": [
+        "keep"
+      ],
+      "actual": "modernize-first"
+    },
+    {
+      "id": "builder-shopify",
+      "kind": "dimension",
+      "field": "portabilityOpportunity",
+      "expected": "medium",
+      "actual": "low"
+    },
+    {
+      "id": "umami",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "high",
+      "actual": "medium"
+    },
+    {
+      "id": "nextchat",
+      "kind": "dimension",
+      "field": "keepValue",
+      "expected": "high",
+      "actual": "medium"
+    },
+    {
+      "id": "typebot-builder",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "medium",
+      "actual": "high"
+    },
+    {
+      "id": "open-next-aws-app-router",
+      "kind": "dimension",
+      "field": "maintenanceRisk",
+      "expected": "low",
+      "actual": "high"
+    },
+    {
+      "id": "open-next-aws-app-router",
+      "kind": "recommendation",
+      "field": "recommendation",
+      "expected": [
+        "keep"
+      ],
+      "actual": "modernize-first"
+    }
+  ],
+  "cases": [
+    {
+      "id": "vercel-commerce",
+      "repository": "vercel/commerce",
+      "commit": "3761e52e60df9c6a316e067dbfd7032e494d3634",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "15.6.0-canary.60",
+      "versionActual": "15.6.0-canary.60",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "features.serverDirectives",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "features.cacheApis",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 65,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "calcom-web",
+      "repository": "calcom/cal.com",
+      "commit": "b0a34f21c91ae7803f9b7e2c59c2fbd187cce26f",
+      "workspacePath": "apps/web",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "16.2.3",
+      "versionActual": "16.2.3",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "router",
+          "expected": "mixed",
+          "actual": "mixed",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "keep",
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 990,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "dub-web",
+      "repository": "dubinc/dub",
+      "commit": "b12244cff23c7f226678d0fe958956405b28ad0d",
+      "workspacePath": "apps/web",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "15.5.8",
+      "versionActual": "15.5.8",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 4,
+      "sourceFiles": 3605,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "documenso-docs",
+      "repository": "documenso/documenso",
+      "commit": "5603a9e59da2ae770edcc822ac08a5e3df02ad82",
+      "workspacePath": "apps/docs",
+      "packageManagerExpected": "npm",
+      "packageManagerActual": "npm",
+      "versionExpected": "16.3.0",
+      "versionActual": "16.3.0",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 23,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "formbricks-web",
+      "repository": "formbricks/formbricks",
+      "commit": "cd1c6a3d79d6d3dca9ee97e44f2e62f44f8dc474",
+      "workspacePath": "apps/web",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "16.3.3",
+      "versionActual": "16.3.3",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "features.serverDirectives",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "features.cacheApis",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "insufficient-evidence",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": false,
+      "confidence": "low",
+      "parserFailures": 21,
+      "sourceFiles": 3058,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "supabase-www",
+      "repository": "supabase/supabase",
+      "commit": "4dd8a95f0b075b3468d6398d6634f34c3a1a0b86",
+      "workspacePath": "apps/www",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "^15.5.21",
+      "versionActual": "15.5.21",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "router",
+          "expected": "mixed",
+          "actual": "mixed",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "keep",
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 921,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "shadcn-v4",
+      "repository": "shadcn-ui/ui",
+      "commit": "2b3e6d4f8d9161fe5c19340dc383aade392012dd",
+      "workspacePath": "apps/v4",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "16.3.3",
+      "versionActual": "16.3.3",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 0,
+      "sourceFiles": 3409,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "unkey-dashboard",
+      "repository": "unkeyed/unkey",
+      "commit": "56a1b2ec4a409abe046043255463f46310104515",
+      "workspacePath": "web/apps/dashboard",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": null,
+      "versionExpected": "16.2.6",
+      "versionActual": "16.2.6",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 3,
+      "sourceFiles": 1641,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "openstatus-web",
+      "repository": "openstatusHQ/openstatus",
+      "commit": "a6887e1f3b80a40c8fde3ce513fba456ef3c2f2b",
+      "workspacePath": "apps/web",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "catalog:",
+      "versionActual": "catalog:",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "medium",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "keep",
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 0,
+      "sourceFiles": 266,
+      "lockfileFailure": true,
+      "dangerousErrors": []
+    },
+    {
+      "id": "uploadthing-docs",
+      "repository": "pingdotgg/uploadthing",
+      "commit": "e8ffeaeed0dad695bc4e56f2b9f6849da1b53d45",
+      "workspacePath": "docs",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "15.5.8",
+      "versionActual": "15.5.8",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 59,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "midday-dashboard",
+      "repository": "midday-ai/midday",
+      "commit": "51587319f26a0ffaa9dfccab1920373cb65689b7",
+      "workspacePath": "apps/dashboard",
+      "packageManagerExpected": "bun",
+      "packageManagerActual": "bun",
+      "versionExpected": "16.2.1",
+      "versionActual": "16.2.1",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 723,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "dokploy-app",
+      "repository": "dokploy/dokploy",
+      "commit": "853ca33659853093ee6a91af3719abdc4e1bae72",
+      "workspacePath": "apps/dokploy",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "16.3.4",
+      "versionActual": "16.3.4",
+      "signalChecks": [
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appPages",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appLayouts",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "pages",
+          "actual": "pages",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "medium",
+          "actual": "low",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 716,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "tailwind-blog",
+      "repository": "timlrx/tailwind-nextjs-starter-blog",
+      "commit": "b45bef66b40c63b6f57c15ee8cd090682238df4c",
+      "workspacePath": ".",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "15.5.12",
+      "versionActual": "15.5.12",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 0,
+      "sourceFiles": 51,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "ixartz-boilerplate",
+      "repository": "ixartz/Next-js-Boilerplate",
+      "commit": "9df22d0980702729da01c4465b9fb8ca292d6cce",
+      "workspacePath": ".",
+      "packageManagerExpected": "npm",
+      "packageManagerActual": "npm",
+      "versionExpected": "16.3.1",
+      "versionActual": "16.3.1",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 61,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "next-enterprise",
+      "repository": "Blazity/next-enterprise",
+      "commit": "97c4f3ed6be0a5b255d0e71606c7b355138281a9",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "15.5.18",
+      "versionActual": "15.5.18",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 22,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "boxyhq-saas",
+      "repository": "boxyhq/saas-starter-kit",
+      "commit": "abc9b686823cbfb4973c79bc36fea37a3244be6c",
+      "workspacePath": ".",
+      "packageManagerExpected": "npm",
+      "packageManagerActual": "npm",
+      "versionExpected": "15.5.14",
+      "versionActual": "15.5.14",
+      "signalChecks": [
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appPages",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appLayouts",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "pages",
+          "actual": "pages",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 283,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "next-saas-stripe",
+      "repository": "mickasmt/next-saas-stripe-starter",
+      "commit": "a78d130af7e04d0250d65c67f217976f7eb3adc2",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "14.2.5",
+      "versionActual": "14.2.5",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 189,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "precedent",
+      "repository": "steven-tey/precedent",
+      "commit": "3be40205d7cdf56082cd284f07f12251b9208f79",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "14.3.0-canary.57",
+      "versionActual": "14.3.0-canary.57",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "high",
+          "correct": false
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 34,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "shadcn-storybook-registry",
+      "repository": "lloydrichards/shadcn-storybook-registry",
+      "commit": "1b8ea726ea8e5d6b937e2f1bcf046e2c8a5d3f56",
+      "workspacePath": ".",
+      "packageManagerExpected": "bun",
+      "packageManagerActual": "bun",
+      "versionExpected": "^16.3.3",
+      "versionActual": "16.3.3",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 276,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "babylon-documentation",
+      "repository": "BabylonJS/Documentation",
+      "commit": "6c76988fd6c81c9dfc97ae74925fffa208263fd4",
+      "workspacePath": ".",
+      "packageManagerExpected": "npm",
+      "packageManagerActual": "npm",
+      "versionExpected": "^16.3.4",
+      "versionActual": "16.3.4",
+      "signalChecks": [
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "config.staticExport",
+          "expected": true,
+          "actual": false,
+          "correct": false
+        },
+        {
+          "feature": "routes.appPages",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appLayouts",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "pages",
+          "actual": "pages",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "low",
+          "actual": "medium",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "high",
+          "actual": "low",
+          "correct": false
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "migration-candidate",
+        "keep-and-simplify"
+      ],
+      "recommendationAllowed": false,
+      "confidence": "medium",
+      "parserFailures": 1,
+      "sourceFiles": 90,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "react-email-web",
+      "repository": "resend/react-email",
+      "commit": "4286a51a9350c92f8004e9288d16dc63e7e7f67d",
+      "workspacePath": "apps/web",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "catalog:",
+      "versionActual": "16.3.3",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "medium",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "keep",
+      "allowedRecommendations": [
+        "keep",
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 322,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "twenty-website",
+      "repository": "twentyhq/twenty",
+      "commit": "490871c1dcdc66b921df57203a8b426f7efa00df",
+      "workspacePath": "packages/twenty-website",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "^16.2.6",
+      "versionActual": "16.3.2",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first",
+        "keep"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 2,
+      "sourceFiles": 1133,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "liveblocks-dashboard-example",
+      "repository": "liveblocks/liveblocks",
+      "commit": "2cb217f70cdfede46f842869776246447ba2dfd7",
+      "workspacePath": "examples/nextjs-dashboard",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "^16.2.12",
+      "versionActual": "16.1.4",
+      "signalChecks": [
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appPages",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appLayouts",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "pages",
+          "actual": "pages",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first",
+        "keep-and-simplify"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 9,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "saleor-storefront",
+      "repository": "saleor/storefront",
+      "commit": "a2013699703cdcb9a3059b3583eb749701cdff81",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "16.3.4",
+      "versionActual": "16.3.4",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": false,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 721,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "medusa-starter",
+      "repository": "medusajs/nextjs-starter-medusa",
+      "commit": "9818886f06e493cb2249733d114d339aa216ef00",
+      "workspacePath": ".",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "15.3.9",
+      "versionActual": "15.3.9",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 0,
+      "sourceFiles": 206,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "builder-shopify",
+      "repository": "BuilderIO/nextjs-shopify",
+      "commit": "0cf7006963614f79f8d1071b3811f6a41d04e0cd",
+      "workspacePath": ".",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "13.1.6",
+      "versionActual": "13.1.6",
+      "signalChecks": [
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appPages",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appLayouts",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "pages",
+          "actual": "pages",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "medium",
+          "actual": "medium",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "medium",
+          "actual": "low",
+          "correct": false
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 92,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "umami",
+      "repository": "umami-software/umami",
+      "commit": "ca661c7057984aa98ed4f7083d84dae2f65bfcb0",
+      "workspacePath": ".",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "16.3.0",
+      "versionActual": "16.3.0",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "medium",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 1064,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "nextchat",
+      "repository": "ChatGPTNextWeb/NextChat",
+      "commit": "defdcdb55d850cd12c4c657eb83729fd66e215c0",
+      "workspacePath": ".",
+      "packageManagerExpected": "yarn",
+      "packageManagerActual": "yarn",
+      "versionExpected": "^14.1.1",
+      "versionActual": "14.1.1",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "medium",
+          "correct": false
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 188,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "typebot-builder",
+      "repository": "baptisteArno/typebot.io",
+      "commit": "386ba648ebc7d436f492c64cfd276ef2d8b7e7c2",
+      "workspacePath": "apps/builder",
+      "packageManagerExpected": "bun",
+      "packageManagerActual": "bun",
+      "versionExpected": "^16.2.9",
+      "versionActual": "16.2.9",
+      "signalChecks": [
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "router",
+          "expected": "mixed",
+          "actual": "mixed",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "medium",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "keep",
+        "modernize-first"
+      ],
+      "recommendationAllowed": true,
+      "confidence": "medium",
+      "parserFailures": 3,
+      "sourceFiles": 787,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    },
+    {
+      "id": "open-next-aws-app-router",
+      "repository": "opennextjs/opennextjs-aws",
+      "commit": "386fc8ef9140a608af831a71459a523b41d6bee3",
+      "workspacePath": "examples/app-router",
+      "packageManagerExpected": "pnpm",
+      "packageManagerActual": "pnpm",
+      "versionExpected": "catalog:",
+      "versionActual": "16.3.4",
+      "signalChecks": [
+        {
+          "feature": "routes.appPages",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.appRouteHandlers",
+          "expected": true,
+          "actual": true,
+          "correct": true
+        },
+        {
+          "feature": "routes.pagesRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "routes.pagesApiRoutes",
+          "expected": false,
+          "actual": false,
+          "correct": true,
+          "derivedFrom": "routerExpected"
+        },
+        {
+          "feature": "router",
+          "expected": "app",
+          "actual": "app",
+          "correct": true
+        }
+      ],
+      "dimensionChecks": [
+        {
+          "dimension": "keepValue",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "migrationCoupling",
+          "expected": "high",
+          "actual": "high",
+          "correct": true
+        },
+        {
+          "dimension": "maintenanceRisk",
+          "expected": "low",
+          "actual": "high",
+          "correct": false
+        },
+        {
+          "dimension": "portabilityOpportunity",
+          "expected": "low",
+          "actual": "low",
+          "correct": true
+        }
+      ],
+      "recommendation": "modernize-first",
+      "allowedRecommendations": [
+        "keep"
+      ],
+      "recommendationAllowed": false,
+      "confidence": "high",
+      "parserFailures": 0,
+      "sourceFiles": 67,
+      "lockfileFailure": false,
+      "dangerousErrors": []
+    }
+  ]
+}
