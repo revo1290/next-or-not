@@ -11,7 +11,7 @@ async function fixture(files) {
   await Promise.all(Object.entries(files).map(async ([name, content]) => {
     const target = path.join(root, name);
     await fs.mkdir(path.dirname(target), { recursive: true });
-    await fs.writeFile(target, typeof content === 'string' ? content : JSON.stringify(content, null, 2));
+    await fs.writeFile(target, typeof content === 'string' || Buffer.isBuffer(content) ? content : JSON.stringify(content, null, 2));
   }));
   return root;
 }
@@ -278,4 +278,165 @@ test('records parse failures, uses only the bounded fallback, and lowers confide
   assert.equal(result.signals.features.requestBoundApis.evidence[0].detectionMethod, 'regex-fallback');
   assert.equal(result.audit.confidence.level, 'medium');
   assert.match(result.audit.confidence.basis.join(' '), /AST parsing failed/);
+});
+
+test('resolves package-lock v1 and npm-shrinkwrap without executing npm', async (t) => {
+  const v1 = await scan({
+    'package.json': nextPackage('^15.0.0', { packageManager: 'npm@10.9.0' }),
+    'package-lock.json': { lockfileVersion: 1, dependencies: { next: { version: '15.5.24' } } },
+    'pages/index.js': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(v1.root, { recursive: true, force: true }));
+  assert.equal(v1.signals.nextProjects[0].resolvedVersion, '15.5.24');
+  assert.equal(v1.signals.nextProjects[0].resolution.file, 'package-lock.json');
+
+  const shrinkwrap = await scan({
+    'package.json': nextPackage('^16.0.0', { packageManager: 'npm@11.0.0' }),
+    'npm-shrinkwrap.json': { lockfileVersion: 3, packages: { 'node_modules/next': { version: '16.3.5' } } },
+    'app/page.js': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(shrinkwrap.root, { recursive: true, force: true }));
+  assert.equal(shrinkwrap.signals.nextProjects[0].resolvedVersion, '16.3.5');
+  assert.equal(shrinkwrap.signals.nextProjects[0].resolution.file, 'npm-shrinkwrap.json');
+});
+
+test('resolves distinct pnpm workspace versions including a prerelease', async (t) => {
+  const result = await scan({
+    'package.json': { name: 'root', private: true, packageManager: 'pnpm@10.0.0', workspaces: ['apps/*'] },
+    'pnpm-lock.yaml': [
+      "lockfileVersion: '9.0'",
+      'importers:',
+      '  apps/stable:',
+      '    dependencies:',
+      '      next:',
+      '        specifier: ^16.0.0',
+      '        version: 16.3.5(react@19.1.0)',
+      '  apps/canary:',
+      '    dependencies:',
+      '      next:',
+      '        specifier: 16.4.0-canary.12',
+      '        version: 16.4.0-canary.12(react@19.1.0)',
+    ].join('\n'),
+    'apps/stable/package.json': nextPackage('^16.0.0'),
+    'apps/stable/app/page.tsx': 'export default function Page() { return null }',
+    'apps/canary/package.json': nextPackage('16.4.0-canary.12'),
+    'apps/canary/app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const versions = Object.fromEntries(result.signals.nextProjects.map((project) => [project.path, project.resolvedVersion]));
+  assert.deepEqual(versions, { 'apps/canary': '16.4.0-canary.12', 'apps/stable': '16.3.5' });
+  assert.ok(result.signals.nextProjects.every((project) => project.resolution.packageManager === 'pnpm'));
+});
+
+test('resolves Yarn Classic and Berry descriptors, aliases, and workspace ranges', async (t) => {
+  const classic = await scan({
+    'package.json': nextPackage('npm:next@^15.0.0', { packageManager: 'yarn@1.22.22' }),
+    'yarn.lock': [
+      '# yarn lockfile v1',
+      '',
+      'next@npm:next@^15.0.0:',
+      '  version "15.5.24"',
+      '  resolved "https://registry.yarnpkg.com/next/-/next-15.5.24.tgz"',
+    ].join('\n'),
+    'pages/index.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(classic.root, { recursive: true, force: true }));
+  assert.equal(classic.signals.nextProjects[0].resolvedVersion, '15.5.24');
+  assert.equal(classic.signals.versionResolution.lockfile.lockfileVersion, 1);
+
+  const berry = await scan({
+    'package.json': { name: 'root', private: true, packageManager: 'yarn@4.9.2', workspaces: ['apps/*'] },
+    'yarn.lock': [
+      '__metadata:',
+      '  version: 8',
+      '  cacheKey: 10c0',
+      '',
+      '"next@npm:^16.0.0":',
+      '  version: 16.3.5',
+      '  resolution: "next@npm:16.3.5"',
+    ].join('\n'),
+    'apps/web/package.json': nextPackage('^16.0.0'),
+    'apps/web/app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(berry.root, { recursive: true, force: true }));
+  assert.equal(berry.signals.nextProjects[0].resolvedVersion, '16.3.5');
+  assert.equal(berry.signals.versionResolution.lockfile.lockfileVersion, 8);
+});
+
+test('resolves Bun text workspaces and build metadata while rejecting binary guesses', async (t) => {
+  const textLock = await scan({
+    'package.json': { name: 'root', private: true, packageManager: 'bun@1.2.0', workspaces: ['apps/*'] },
+    'bun.lock': [
+      '{',
+      '  // Bun text lockfiles are JSONC',
+      '  "lockfileVersion": 1,',
+      '  "workspaces": {',
+      '    "apps/web": { "dependencies": { "next": "next@16.3.5+build.7" } },',
+      '  },',
+      '  "packages": { "next": ["next@16.3.5+build.7", "", {}, "sha512-x"], },',
+      '}',
+    ].join('\n'),
+    'apps/web/package.json': nextPackage('^16.0.0'),
+    'apps/web/app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(textLock.root, { recursive: true, force: true }));
+  assert.equal(textLock.signals.nextProjects[0].resolvedVersion, '16.3.5+build.7');
+
+  const binary = await scan({
+    'package.json': nextPackage('^16.0.0', { packageManager: 'bun@1.1.0' }),
+    'bun.lockb': Buffer.from([0, 1, 2, 3]),
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(binary.root, { recursive: true, force: true }));
+  assert.equal(binary.signals.nextProjects[0].resolvedVersion, null);
+  assert.equal(binary.signals.nextProjects[0].resolution.source, 'unresolved');
+  assert.equal(binary.signals.versionResolution.errors[0].code, 'unsupported-binary-lockfile');
+});
+
+test('prefers installed Next.js, reports lockfile drift, and preserves provenance', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage('^16.0.0'),
+    'package-lock.json': npmLock('16.3.3'),
+    'node_modules/next/package.json': { name: 'next', version: '16.3.5' },
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const project = result.signals.nextProjects[0];
+  assert.equal(project.resolvedVersion, '16.3.5');
+  assert.equal(project.resolution.source, 'installed');
+  assert.equal(project.resolution.scope, 'workspace');
+  assert.match(project.resolutionWarnings[0], /does not match lockfile/);
+  assert.equal(result.audit.confidence.level, 'medium');
+});
+
+test('returns structured failure for a malformed lockfile instead of guessing', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage('^16.0.0', { packageManager: 'pnpm@10.0.0' }),
+    'pnpm-lock.yaml': 'importers:\n  .:\n   broken: [',
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  assert.equal(result.signals.nextProjects[0].resolvedVersion, null);
+  assert.equal(result.signals.nextProjects[0].resolution.source, 'unresolved');
+  assert.equal(result.signals.nextProjects[0].resolutionErrors[0].code, 'malformed-lockfile');
+  assert.equal(result.audit.confidence.level, 'medium');
+});
+
+test('does not follow an installed Next.js symlink outside the scanned repository', async (t) => {
+  const outside = await fixture({ 'package.json': { name: 'next', version: '99.0.0' } });
+  const root = await fixture({
+    'package.json': nextPackage('^16.0.0'),
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  await fs.mkdir(path.join(root, 'node_modules'), { recursive: true });
+  await fs.symlink(outside, path.join(root, 'node_modules', 'next'), 'dir');
+  t.after(() => Promise.all([
+    fs.rm(root, { recursive: true, force: true }),
+    fs.rm(outside, { recursive: true, force: true }),
+  ]));
+  const { signals } = await scanProject(root);
+  const project = signals.nextProjects[0];
+  assert.equal(project.resolvedVersion, null);
+  assert.equal(project.resolution.source, 'unresolved');
+  assert.match(project.resolutionWarnings[0], /outside the scanned repository/);
 });

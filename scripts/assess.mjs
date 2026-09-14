@@ -6,6 +6,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { analyzeSourceAst, analyzeSourceFallback } from './analyzers/ast.mjs';
+import { createNextVersionResolver } from './resolvers/next-version.mjs';
 
 const IGNORED = new Set([
   '.git', '.next', '.nuxt', '.output', '.turbo', 'build', 'coverage', 'dist',
@@ -33,6 +34,7 @@ function feature() {
 function emptySignals() {
   return {
     packageManager: null,
+    versionResolution: { lockfile: null, errors: [] },
     packageJsonFiles: 0,
     nextProjects: [],
     sourceFiles: 0,
@@ -130,33 +132,11 @@ function parseMajor(version) {
   return match ? Number(match[1]) : null;
 }
 
-function exactVersion(version) {
-  if (typeof version !== 'string') return null;
-  const match = version.trim().match(/^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$/);
-  return match?.[1] ?? null;
-}
-
 function compareVersions(left, right) {
   const a = left.match(/\d+/g)?.slice(0, 3).map(Number) ?? [0, 0, 0];
   const b = right.match(/\d+/g)?.slice(0, 3).map(Number) ?? [0, 0, 0];
   for (let index = 0; index < 3; index += 1) if (a[index] !== b[index]) return a[index] - b[index];
   return 0;
-}
-
-async function findResolvedNpmVersion(root, projectRoot) {
-  const lockPath = path.join(root, 'package-lock.json');
-  if (!await exists(lockPath)) return null;
-  try {
-    const lock = await readJson(lockPath);
-    const projectRel = normalize(root, projectRoot);
-    const candidates = projectRel === '.' ? ['node_modules/next'] : [`${projectRel}/node_modules/next`, 'node_modules/next'];
-    for (const key of candidates) {
-      const version = lock.packages?.[key]?.version;
-      if (exactVersion(version)) return version;
-    }
-    const legacy = lock.dependencies?.next?.version;
-    return exactVersion(legacy);
-  } catch { return null; }
 }
 
 function isAppFile(rel, namePattern = '.+') {
@@ -178,6 +158,9 @@ export async function scanProject(projectPath = '.') {
   signals.truncated = truncated;
   const packageFiles = files.filter((file) => path.basename(file) === 'package.json');
   signals.packageJsonFiles = packageFiles.length;
+  const versionResolver = await createNextVersionResolver(root);
+  signals.packageManager = versionResolver.packageManager;
+  signals.versionResolution = { lockfile: versionResolver.lockfile, errors: versionResolver.errors };
 
   for (const packageFile of packageFiles) {
     let pkg;
@@ -185,18 +168,19 @@ export async function scanProject(projectPath = '.') {
     const dependencies = { ...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies };
     if (!dependencies.next) continue;
     const projectRoot = path.dirname(packageFile);
-    const resolvedVersion = await findResolvedNpmVersion(root, projectRoot);
+    const version = await versionResolver.resolve(projectRoot, dependencies.next);
     signals.nextProjects.push({
       path: normalize(root, projectRoot), name: pkg.name ?? null, declaredVersion: dependencies.next,
-      resolvedVersion, major: parseMajor(resolvedVersion ?? dependencies.next),
+      resolvedVersion: version.resolvedVersion,
+      versionSource: version.resolution.source,
+      resolution: version.resolution,
+      resolutionWarnings: version.warnings,
+      resolutionErrors: version.errors,
+      resolutionCandidates: version.candidates,
+      major: parseMajor(version.resolvedVersion ?? dependencies.next),
     });
     if (Object.values(pkg.scripts ?? {}).some((value) => /(?:^|\s)next\s+lint(?:\s|$)/.test(value))) signals.scripts.nextLint = true;
   }
-
-  if (await exists(path.join(root, 'pnpm-lock.yaml'))) signals.packageManager = 'pnpm';
-  else if (await exists(path.join(root, 'yarn.lock'))) signals.packageManager = 'yarn';
-  else if (await exists(path.join(root, 'bun.lockb')) || await exists(path.join(root, 'bun.lock'))) signals.packageManager = 'bun';
-  else if (await exists(path.join(root, 'package-lock.json'))) signals.packageManager = 'npm';
 
   const scopes = signals.nextProjects.map((project) => path.resolve(root, project.path));
   if (!scopes.length) return { root, signals };
@@ -400,7 +384,7 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   const supportStatuses = support.map((project) => project.support.status);
   if (supportStatuses.includes('unsupported')) maintenanceEvidence.push('At least one Next.js project is outside the bundled LTS policy.');
   if (supportStatuses.includes('prerelease')) maintenanceEvidence.push('At least one project resolves to a pre-release Next.js build.');
-  if (supportStatuses.includes('patch-review')) maintenanceEvidence.push('An exact installed version is below a patched release recorded in the evidence snapshot.');
+  if (supportStatuses.includes('patch-review')) maintenanceEvidence.push('An exact resolved version is below a patched release recorded in the evidence snapshot.');
   if (supportStatuses.includes('maintenance-lts')) maintenanceEvidence.push('At least one project is on Maintenance LTS.');
   if (supportStatuses.includes('unknown') || supportStatuses.includes('snapshot-unknown')) maintenanceEvidence.push('Support status could not be established from the snapshot.');
   if (signals.router === 'mixed') maintenanceEvidence.push('App Router and Pages Router coexist.');
@@ -425,9 +409,13 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   if (signals.readErrors) confidenceBasis.push(`${signals.readErrors} file(s) could not be parsed or read.`);
   if (signals.analysis?.failedFiles) confidenceBasis.push(`AST parsing failed for ${signals.analysis.failedFiles} source file(s); only bounded fallback evidence was retained.`);
   if (signals.sourceFilesSkippedLarge) confidenceBasis.push(`${signals.sourceFilesSkippedLarge} source file(s) exceeded the size limit.`);
+  const resolutionWarnings = support.flatMap((project) => project.resolutionWarnings ?? []);
+  const resolutionErrors = support.flatMap((project) => project.resolutionErrors ?? []);
+  if (resolutionWarnings.length) confidenceBasis.push(`${resolutionWarnings.length} version-resolution warning(s) require review.`);
+  if (resolutionErrors.length || signals.versionResolution?.errors?.length) confidenceBasis.push('A lockfile could not be resolved safely; the failure is included in JSON output.');
   if (signals.nextProjects.length > 1) confidenceBasis.push(`${signals.nextProjects.length} Next.js workspaces were aggregated; audit each workspace separately for a final decision.`);
   if (signals.router === 'unknown') confidenceBasis.push('No App Router or Pages Router route files were identified.');
-  if (!support.some((project) => project.resolvedVersion)) confidenceBasis.push('No exact installed Next.js version was resolved from package-lock.json.');
+  if (support.some((project) => !project.resolvedVersion)) confidenceBasis.push('At least one Next.js workspace has no exact installed, lockfile, or declared version.');
   let confidenceLevel = signals.truncated || signals.readErrors > 5 || (signals.analysis?.failedFiles ?? 0) > 5 || signals.router === 'unknown'
     ? 'low' : confidenceBasis.length ? 'medium' : 'high';
   if (now > new Date(`${EVIDENCE_SNAPSHOT.refreshAfter}T23:59:59Z`)) {
@@ -447,7 +435,8 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   const combinedProxy = { files: f.proxy.files + f.middleware.files, examples: [...f.proxy.examples, ...f.middleware.examples].slice(0, MAX_EXAMPLES) };
   const findings = [
     `Detected ${signals.router} router usage across ${routeFiles} route-related file(s).`,
-    ...support.map((project) => `${project.path}: ${project.resolvedVersion ?? project.declaredVersion} — ${project.support.detail}`),
+    ...support.map((project) => `${project.path}: ${project.resolvedVersion ?? project.declaredVersion} (${project.resolution?.source ?? 'unknown'}${project.resolution?.file ? `: ${project.resolution.file}` : ''}) — ${project.support.detail}`),
+    ...resolutionWarnings,
     evidence('Route Handlers', r.appRouteHandlers), evidence('Pages API routes', r.pagesApiRoutes),
     evidence('Server Actions', f.serverDirectives), evidence('Request-bound APIs', f.requestBoundApis),
     evidence('Cache APIs/directives', combinedCache), evidence('Request-time Pages rendering', f.serverSideProps),
@@ -460,7 +449,7 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
     'Repository scanning cannot establish production traffic, user-visible latency, hosting spend, incident rate, or team delivery pain.',
     'Source patterns do not prove which routes execute dynamically in the deployed build.',
     signals.analysis?.failedFiles ? 'Files that failed AST parsing may contain undetected bindings, exports, directives, or configuration.' : null,
-    !support.some((project) => project.resolvedVersion) ? 'The installed Next.js patch version is unknown without a supported lockfile resolution.' : null,
+    support.some((project) => !project.resolvedVersion) ? 'The exact Next.js patch version is unknown for at least one workspace.' : null,
     signals.nextProjects.length > 1 ? 'Aggregated monorepo results can hide materially different application profiles.' : null,
   ].filter(Boolean);
 
@@ -474,7 +463,7 @@ export function auditContinuation(signals = emptySignals(), now = new Date()) {
   nextSteps.push('Add project evidence for hosting constraints, operational pain, and migration budget before authorizing a rewrite.');
 
   return {
-    applicable: true, recommendation, confidence: { level: confidenceLevel, basis: confidenceBasis.length ? confidenceBasis : ['Complete AST source scan, recognized router, and exact npm lockfile version.'] },
+    applicable: true, recommendation, confidence: { level: confidenceLevel, basis: confidenceBasis.length ? confidenceBasis : ['Complete AST source scan, recognized router, and an exact installed, lockfile, or declared version for every Next.js workspace.'] },
     summary: { keepValue: frameworkValueLevel, migrationCoupling: migrationCouplingLevel, maintenanceRisk: maintenanceRiskLevel, portabilityOpportunity: portabilityLevel },
     profile: {
       router: signals.router, nextProjects: support, routeFiles, strongServerFiles, serverCapabilityCategories: serverCategoryCount,
