@@ -7,6 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 import { analyzeSourceAst, analyzeSourceFallback } from './analyzers/ast.mjs';
 import { createNextVersionResolver } from './resolvers/next-version.mjs';
+import {
+  integrateHumanEvidence, loadHumanContext, normalizeHumanContext, promptForHumanContext,
+} from './human-evidence.mjs';
 
 const IGNORED = new Set([
   '.git', '.next', '.nuxt', '.output', '.turbo', 'build', 'coverage', 'dist',
@@ -493,21 +496,41 @@ function formatHuman(result) {
   lines.push('', 'Observed findings:', ...audit.findings.map((item) => `  - ${item}`));
   if (audit.confidence.basis.length) lines.push('', 'Confidence limits:', ...audit.confidence.basis.map((item) => `  - ${item}`));
   lines.push('', 'Unknown from source alone:', ...audit.unknowns.map((item) => `  - ${item}`));
+  if (result.humanEvidence) {
+    const human = result.humanEvidence;
+    lines.push('', 'Human evidence supplement:',
+      `  Completeness: ${Math.round(human.completeness * 100)}%`,
+      `  Recommendation before/after: ${human.recommendationBeforeHumanEvidence} -> ${human.recommendationAfterHumanEvidence}`);
+    for (const [field, value] of Object.entries(human.rawAnswers)) lines.push(`  ${field}: ${value}`);
+    if (human.validationErrors.length) lines.push('  Validation errors:', ...human.validationErrors.map((item) => `    - ${item.field}: ${item.message}`));
+    if (human.contradictions.length) lines.push('  Contradictions:', ...human.contradictions.map((item) => `    - ${item.message}`));
+    if (human.promptWarning) lines.push(`  Prompt: ${human.promptWarning}`);
+  }
   lines.push('', 'Next checks:', ...audit.nextSteps.map((item) => `  - ${item}`));
   lines.push('', 'This is migration triage, not authorization to rewrite. Use --json for file-level evidence.');
   return lines.join('\n');
 }
 
 function usage() {
-  return ['next-or-not [project-path] [--json]', '', 'Audit an existing Next.js repository for keep value, migration coupling,',
+  return ['next-or-not [project-path] [--json] [--context context.json] [--interactive]', '', 'Audit an existing Next.js repository for keep value, migration coupling,',
     'maintenance risk, and portability opportunity. The scan is read-only and',
-    'does not execute project code or send source files over the network.'].join('\n');
+    'does not execute project code or send source files over the network.', '',
+    '`--context` supplies the fixed seven-field human evidence supplement.',
+    '`--interactive` asks only missing fields and never prompts without a TTY.'].join('\n');
 }
 
-function parseArgs(argv) {
-  const args = { projectPath: '.', json: false };
-  for (const value of argv) {
+export function parseArgs(argv) {
+  const args = { projectPath: '.', json: false, interactive: false, contextPath: null };
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
     if (value === '--json') args.json = true;
+    else if (value === '--interactive') args.interactive = true;
+    else if (value === '--context') {
+      const next = argv[index + 1];
+      if (!next || next.startsWith('-')) throw new Error('--context requires a JSON file path.');
+      args.contextPath = next;
+      index += 1;
+    }
     else if (value === '--help' || value === '-h') args.help = true;
     else if (value.startsWith('-')) throw new Error(`Unknown option: ${value}`);
     else args.projectPath = value;
@@ -519,7 +542,35 @@ export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   if (args.help) { process.stdout.write(`${usage()}\n`); return; }
   const { root, signals } = await scanProject(args.projectPath);
-  const result = { schemaVersion: 3, generatedAt: new Date().toISOString(), evidenceSnapshot: EVIDENCE_SNAPSHOT, projectRoot: root, continuation: auditContinuation(signals), scan: signals };
+  const repositoryAudit = auditContinuation(signals);
+  let continuation = repositoryAudit;
+  let humanEvidence = null;
+  if (args.contextPath || args.interactive) {
+    let rawContext = args.contextPath ? await loadHumanContext(args.contextPath) : {};
+    let promptStatus = args.interactive ? 'not-started' : 'not-requested';
+    let promptWarning = null;
+    if (args.interactive) {
+      const prompted = await promptForHumanContext(rawContext, {
+        input: process.stdin,
+        output: args.json ? process.stderr : process.stdout,
+      });
+      rawContext = prompted.answers;
+      promptStatus = prompted.promptStatus;
+      promptWarning = prompted.promptWarning;
+    }
+    const integrated = integrateHumanEvidence(repositoryAudit, signals, normalizeHumanContext(rawContext));
+    continuation = integrated.continuation;
+    humanEvidence = { ...integrated.humanEvidence, promptStatus, promptWarning };
+  }
+  const result = {
+    schemaVersion: 4,
+    generatedAt: new Date().toISOString(),
+    evidenceSnapshot: EVIDENCE_SNAPSHOT,
+    projectRoot: root,
+    continuation,
+    humanEvidence,
+    scan: signals,
+  };
   process.stdout.write(args.json ? `${JSON.stringify(result, null, 2)}\n` : `${formatHuman(result)}\n`);
 }
 

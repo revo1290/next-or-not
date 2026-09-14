@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { promisify } from 'node:util';
 
 import { auditContinuation, scanProject } from '../scripts/assess.mjs';
+import { HUMAN_QUESTIONS, integrateHumanEvidence, normalizeHumanContext } from '../scripts/human-evidence.mjs';
+
+const execFileAsync = promisify(execFile);
 
 async function fixture(files) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'next-or-not-'));
@@ -439,4 +444,144 @@ test('does not follow an installed Next.js symlink outside the scanned repositor
   assert.equal(project.resolvedVersion, null);
   assert.equal(project.resolution.source, 'unresolved');
   assert.match(project.resolutionWarnings[0], /outside the scanned repository/);
+});
+
+test('keeps the human supplement fixed at seven fields and accepts all unknown', () => {
+  assert.equal(HUMAN_QUESTIONS.length, 7);
+  assert.deepEqual(HUMAN_QUESTIONS.map((question) => question.field), [
+    'reviewDriver', 'evidenceStrength', 'productionRouteProfile', 'deploymentConstraint',
+    'serverCapabilityCriticality', 'roadmapDirection', 'changeCapacity',
+  ]);
+  const context = normalizeHumanContext({});
+  assert.equal(context.completeness, 0);
+  assert.equal(context.unknownFields.length, 7);
+  assert.equal(context.validationErrors.length, 0);
+});
+
+test('normalizes partial and invalid human input without replacing repository facts', () => {
+  const context = normalizeHumanContext({
+    reviewDriver: '開発速度',
+    evidenceStrength: '体感・単発事例',
+    productionRouteProfile: 'invalid-value',
+    note: 'Additional facts stay in the single free-form note.',
+  });
+  assert.equal(context.rawAnswers.reviewDriver, '開発速度');
+  assert.equal(context.rawAnswers.evidenceStrength, '体感・単発事例');
+  assert.equal(context.rawAnswers.productionRouteProfile, 'unknown');
+  assert.equal(context.validationErrors.length, 1);
+  assert.equal(context.note, 'Additional facts stay in the single free-form note.');
+});
+
+test('flags static-only vs request-time evidence and prioritizes configuration investigation', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': "import { cookies } from 'next/headers'\nexport default async function Page() { return String(await cookies()) }",
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
+    deploymentConstraint: 'static-only',
+    productionRouteProfile: '主に静的公開ページ',
+  }));
+  assert.equal(integrated.continuation.recommendation, 'modernize-first');
+  assert.ok(integrated.humanEvidence.contradictions.some((item) => item.code === 'static-only-vs-request-time'));
+  assert.equal(integrated.continuation.profile.router, result.audit.profile.router);
+  assert.equal(integrated.continuation.summary.keepValue, result.audit.summary.keepValue);
+});
+
+test('does not create migration-candidate from answers and preserves measured support for a code candidate', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'next.config.mjs': "export default { output: 'export' }",
+    'app/layout.tsx': "'use client'\nexport default function Layout({ children }) { return children }",
+    'app/page.tsx': "'use client'\nexport default function Page() { return null }",
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const measured = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
+    reviewDriver: 'インフラ費用', evidenceStrength: '継続的な計測', changeCapacity: '小さなspikeのみ',
+  }));
+  assert.equal(measured.humanEvidence.recommendationBeforeHumanEvidence, 'migration-candidate');
+  assert.equal(measured.continuation.recommendation, 'migration-candidate');
+
+  const keepResult = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(keepResult.root, { recursive: true, force: true }));
+  const answerOnly = integrateHumanEvidence(keepResult.audit, keepResult.signals, normalizeHumanContext({
+    reviewDriver: 'インフラ費用', evidenceStrength: '複数の障害・SLO違反', changeCapacity: '全面移行を実施可能',
+  }));
+  assert.notEqual(answerOnly.continuation.recommendation, 'migration-candidate');
+});
+
+test('constrains a migration candidate when capacity is absent and weak evidence remains weak', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'next.config.mjs': "export default { output: 'export' }",
+    'app/page.tsx': "'use client'\nexport default function Page() { return null }",
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
+    reviewDriver: '開発速度', evidenceStrength: '体感・単発事例', changeCapacity: '移行予算なし',
+  }));
+  assert.equal(integrated.continuation.recommendation, 'keep-and-simplify');
+  assert.match(integrated.continuation.nextSteps.join(' '), /continuing measurements/);
+});
+
+test('reports a contradiction when detected server value is reported unused', async (t) => {
+  const result = await scan({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/api/route.ts': 'export async function POST(request) { return Response.json(await request.json()) }',
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(result.root, { recursive: true, force: true }));
+  const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
+    serverCapabilityCriticality: '利用していない',
+  }));
+  assert.ok(integrated.humanEvidence.contradictions.some((item) => item.code === 'reported-unused-vs-detected-server'));
+  assert.equal(integrated.continuation.summary.keepValue, result.audit.summary.keepValue);
+});
+
+test('interactive mode does not prompt or hang when stdin is not a TTY', async (t) => {
+  const root = await fixture({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': 'export default function Page() { return null }',
+  });
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const cli = path.resolve('scripts/assess.mjs');
+  const { stdout } = await execFileAsync(process.execPath, [cli, root, '--interactive', '--json'], { timeout: 5_000 });
+  const output = JSON.parse(stdout);
+  assert.equal(output.humanEvidence.promptStatus, 'skipped-non-tty');
+  assert.equal(output.humanEvidence.unknownFields.length, 7);
+  assert.match(output.humanEvidence.promptWarning, /without a TTY/);
+});
+
+test('context file is reflected in both human-readable and JSON output', async (t) => {
+  const root = await fixture({
+    'package.json': nextPackage(),
+    'package-lock.json': npmLock(),
+    'app/page.tsx': 'export default function Page() { return null }',
+    'context.json': {
+      answers: { reviewDriver: '開発速度', evidenceStrength: '体感・単発事例', changeCapacity: '小さなspikeのみ' },
+      note: 'Keep raw context separate from source findings.',
+    },
+  });
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const cli = path.resolve('scripts/assess.mjs');
+  const contextPath = path.join(root, 'context.json');
+  const [human, json] = await Promise.all([
+    execFileAsync(process.execPath, [cli, root, '--context', contextPath], { timeout: 5_000 }),
+    execFileAsync(process.execPath, [cli, root, '--context', contextPath, '--json'], { timeout: 5_000 }),
+  ]);
+  assert.match(human.stdout, /Human evidence supplement:/);
+  assert.match(human.stdout, /reviewDriver: 開発速度/);
+  const output = JSON.parse(json.stdout);
+  assert.equal(output.humanEvidence.rawAnswers.reviewDriver, '開発速度');
+  assert.equal(output.humanEvidence.note, 'Keep raw context separate from source findings.');
+  assert.equal(output.humanEvidence.implications[0].field, 'reviewDriver');
 });

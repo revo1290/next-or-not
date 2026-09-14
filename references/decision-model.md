@@ -107,3 +107,17 @@ Before authorizing migration, add:
 7. Rollback path, retraining cost, and opportunity cost.
 
 If those facts do not demonstrate material benefit beyond switching cost, retain the existing system even when another framework appears simpler in isolation.
+
+## Human evidence integration
+
+The CLI accepts exactly seven structured human fields. They cover the review driver, strength of its evidence, deployed route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and available change capacity. All fields permit `unknown`; supplementary detail belongs to one unscored `note`.
+
+Repository observations remain authoritative architecture facts. Human answers are stored as raw input and converted to separate implications. Contradictions remain visible rather than choosing one side silently. In particular:
+
+- `static-only` plus detected request-time behavior prioritizes configuration and route-inventory work;
+- reported unused server capability plus medium/high detected keep value requires verification;
+- anecdotal or absent pain evidence cannot strengthen the migration case;
+- no migration budget can constrain a repository-derived candidate to keep-and-simplify;
+- human answers alone can never create `migration-candidate`.
+
+The recommendation before and after human integration is retained so every change is auditable. Scan confidence is not increased by questionnaire completeness because it describes repository coverage, not confidence in the business decision.
