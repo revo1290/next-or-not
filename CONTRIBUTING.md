@@ -103,6 +103,46 @@ The seven human-evidence fields are fixed by design — please do not propose an
 - Fill in the pull request template; explain what evidence the change rests on.
 - A pull request that changes prose in one language should change it in all of them, or say explicitly why not.
 
+## Releasing
+
+Only maintainers publish. Releases are driven by a tag, so nothing reaches npm
+without the full check suite and a tarball smoke test passing first.
+
+1. Make sure `main` is green and has everything the release should contain.
+2. Update `CHANGELOG.md`: move the `Unreleased` entries under a new version
+   heading with today's date, and add the comparison links at the bottom.
+3. Bump `version` in `package.json` to match. The workflow refuses to publish
+   when the tag and `package.json` disagree.
+4. Run `npm run check` locally one more time.
+5. Commit, open a pull request, and merge it.
+6. Tag the merge commit and push the tag:
+
+   ```bash
+   git checkout main && git pull
+   git tag -a v0.7.1 -m "v0.7.1"
+   git push origin v0.7.1
+   ```
+
+The `Release` workflow then runs the full check suite, verifies the tag against
+`package.json`, installs the packed tarball into a clean project and runs the
+CLI through its `bin` symlink in both locales, publishes with npm provenance,
+and opens a GitHub release.
+
+To rehearse without publishing, run the workflow manually from the Actions tab
+with **Pack and verify without publishing** left on; it stops after the verify
+job.
+
+### One-time setup
+
+- An npm automation token with publish rights on `next-or-not`, stored as the
+  `NPM_TOKEN` repository secret.
+- A repository environment named `npm-publish`. Add required reviewers to it if
+  you want a human approval step before anything is sent to the registry.
+
+Provenance requires the workflow's `id-token: write` permission, which is
+already set. A published version cannot be replaced, only deprecated — so a
+mistake costs a new patch version, never an overwrite.
+
 ## Reporting a bug
 
 Open an issue with the bug template. A minimal repository layout that reproduces the wrong detection is worth more than a description of it — the analyzer is entirely deterministic on file contents, so a fixture is usually enough to diagnose.

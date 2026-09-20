@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import { HUMAN_QUESTIONS } from './human-evidence.mjs';
 import { CATALOGS, SUPPORTED_LOCALES } from './i18n/index.mjs';
+import { isMainModule } from './entrypoint.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
@@ -116,8 +117,7 @@ export async function validateDocs() {
   return problems;
 }
 
-const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
-if (invokedPath === fileURLToPath(import.meta.url)) {
+if (isMainModule(import.meta.url)) {
   const problems = await validateDocs();
   if (problems.length) {
     process.stderr.write(`Documentation is out of sync with the code:\n${problems.map((item) => `  - ${item}`).join('\n')}\n`);

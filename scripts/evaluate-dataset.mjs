@@ -5,11 +5,11 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { auditContinuation, scanProject } from './assess.mjs';
 import { createNextVersionResolver } from './resolvers/next-version.mjs';
+import { isMainModule } from './entrypoint.mjs';
 
 const execFileAsync = promisify(execFile);
 const LEVELS = new Set(['low', 'medium', 'high']);
@@ -343,5 +343,4 @@ export async function main(argv = process.argv.slice(2)) {
   if (report.cloneOrScanFailures.length) process.exitCode = 1;
 }
 
-const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
-if (invokedPath === fileURLToPath(import.meta.url)) main().catch((error) => { process.stderr.write(`next-or-not dataset: ${error.message}\n`); process.exitCode = 1; });
+if (isMainModule(import.meta.url)) main().catch((error) => { process.stderr.write(`next-or-not dataset: ${error.message}\n`); process.exitCode = 1; });

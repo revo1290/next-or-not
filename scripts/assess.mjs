@@ -3,13 +3,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { analyzeSourceAst, analyzeSourceFallback } from './analyzers/ast.mjs';
 import {
   createTranslator, DEFAULT_LOCALE, displayWidth, localize, msg, padToWidth, resolveLocale, SUPPORTED_LOCALES,
 } from './i18n/index.mjs';
 import { createNextVersionResolver } from './resolvers/next-version.mjs';
+import { isMainModule } from './entrypoint.mjs';
 import {
   integrateHumanEvidence, loadHumanContext, normalizeHumanContext, promptForHumanContext,
 } from './human-evidence.mjs';
@@ -609,7 +609,6 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
     : `${formatHuman(result, t)}\n`);
 }
 
-const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
-if (invokedPath === fileURLToPath(import.meta.url)) {
+if (isMainModule(import.meta.url)) {
   main().catch((error) => { process.stderr.write(`next-or-not: ${error.message}\n`); process.exitCode = 1; });
 }

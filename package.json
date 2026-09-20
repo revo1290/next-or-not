@@ -1,6 +1,6 @@
 {
   "name": "next-or-not",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "A read-only, source-evidence audit that decides whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery. Reports in English and Japanese.",
   "type": "module",
   "bin": {
@@ -12,10 +12,11 @@
     "test": "node --test",
     "validate:skill": "node scripts/validate-skill.mjs",
     "validate:docs": "node scripts/validate-docs.mjs",
+    "validate:package": "node scripts/validate-package.mjs",
     "dataset:validate": "node scripts/evaluate-dataset.mjs --validate-only",
     "dataset:smoke": "node scripts/evaluate-dataset.mjs --subset smoke --output dataset/results-smoke.json",
     "dataset:full": "node scripts/evaluate-dataset.mjs --subset full --output dataset/results-full.json --markdown references/calibration-baseline.md",
-    "check": "npm run lint && npm test && npm run validate:skill && npm run validate:docs && npm run dataset:validate"
+    "check": "npm run lint && npm test && npm run validate:skill && npm run validate:docs && npm run validate:package && npm run dataset:validate"
   },
   "engines": {
     "node": ">=20"
@@ -29,6 +30,7 @@
     "SKILL.md",
     "README.md",
     "README.ja.md",
+    "CHANGELOG.md",
     "agents",
     "references",
     "scripts",
@@ -57,5 +59,9 @@
   "bugs": {
     "url": "https://github.com/revo1290/next-or-not/issues"
   },
-  "homepage": "https://github.com/revo1290/next-or-not#readme"
+  "homepage": "https://github.com/revo1290/next-or-not#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }
