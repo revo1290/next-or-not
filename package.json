@@ -1,19 +1,21 @@
 {
   "name": "next-or-not",
-  "version": "0.6.0",
-  "description": "A source-evidence audit for deciding whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery",
+  "version": "0.7.0",
+  "description": "A read-only, source-evidence audit that decides whether an existing Next.js app should stay, simplify, modernize, or enter migration discovery. Reports in English and Japanese.",
   "type": "module",
   "bin": {
     "next-or-not": "scripts/assess.mjs"
   },
   "scripts": {
     "assess": "node scripts/assess.mjs",
+    "lint": "eslint .",
+    "test": "node --test",
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
     "dataset:validate": "node scripts/evaluate-dataset.mjs --validate-only",
     "dataset:smoke": "node scripts/evaluate-dataset.mjs --subset smoke --output dataset/results-smoke.json",
     "dataset:full": "node scripts/evaluate-dataset.mjs --subset full --output dataset/results-full.json --markdown references/calibration-baseline.md",
-    "test": "node --test",
-    "validate:skill": "node scripts/validate-skill.mjs",
-    "check": "npm test && npm run validate:skill && npm run dataset:validate"
+    "check": "npm run lint && npm test && npm run validate:skill && npm run validate:docs && npm run dataset:validate"
   },
   "engines": {
     "node": ">=20"
@@ -25,6 +27,8 @@
   },
   "files": [
     "SKILL.md",
+    "README.md",
+    "README.ja.md",
     "agents",
     "references",
     "scripts",
@@ -36,7 +40,22 @@
     "agent-skill",
     "react",
     "migration-audit",
-    "static-analysis"
+    "static-analysis",
+    "i18n",
+    "japanese"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/revo1290/next-or-not.git"
+  },
+  "bugs": {
+    "url": "https://github.com/revo1290/next-or-not/issues"
+  },
+  "homepage": "https://github.com/revo1290/next-or-not#readme"
 }

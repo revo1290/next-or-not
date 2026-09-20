@@ -1,0 +1,48 @@
+name: Translation / 翻訳
+description: A wrong, unclear, or missing translation — or a request for a new language.
+labels: [i18n]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        All user-facing prose lives in `scripts/i18n/`. See the translation section of
+        [CONTRIBUTING.md](https://github.com/revo1290/next-or-not/blob/main/CONTRIBUTING.md)
+        ([日本語](https://github.com/revo1290/next-or-not/blob/main/CONTRIBUTING.ja.md)).
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind / 種類
+      options:
+        - Wrong or unclear wording / 訳が誤っている・分かりにくい
+        - Missing translation / 訳が抜けている
+        - New language request / 新しい言語の追加
+        - Layout or alignment problem / レイアウト・表示幅の問題
+    validations:
+      required: true
+
+  - type: input
+    id: locale
+    attributes:
+      label: Locale / 言語
+      placeholder: "ja"
+    validations:
+      required: true
+
+  - type: input
+    id: message-id
+    attributes:
+      label: Message id / メッセージid
+      description: Run with `--json` and copy the `id` field. 該当メッセージの `id` を `--json` からコピーしてください。
+      placeholder: "finding.staticExportConflicts"
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Current text and suggestion / 現在の表示と改善案
+      placeholder: |
+        Current / 現在:
+        Suggested / 改善案:
+        Why / 理由:
+    validations:
+      required: true

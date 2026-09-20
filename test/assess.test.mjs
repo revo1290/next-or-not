@@ -8,8 +8,15 @@ import { promisify } from 'node:util';
 
 import { auditContinuation, scanProject } from '../scripts/assess.mjs';
 import { HUMAN_QUESTIONS, integrateHumanEvidence, normalizeHumanContext } from '../scripts/human-evidence.mjs';
+import { createTranslator, localize } from '../scripts/i18n/index.mjs';
 
 const execFileAsync = promisify(execFile);
+
+/** Render message descriptors into one searchable string for assertions. */
+function text(messages, locale = 'en') {
+  const rendered = localize(messages, createTranslator(locale));
+  return Array.isArray(rendered) ? rendered.join(' ') : String(rendered);
+}
 
 async function fixture(files) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'next-or-not-'));
@@ -74,7 +81,7 @@ test('marks a small clean static export as a migration candidate, not a rewrite 
   assert.equal(result.audit.summary.portabilityOpportunity, 'high');
   assert.equal(result.audit.summary.migrationCoupling, 'low');
   assert.equal(result.audit.recommendation, 'migration-candidate');
-  assert.match(result.audit.nextSteps.join(' '), /representative route/);
+  assert.match(text(result.audit.nextSteps), /representative route/);
 });
 
 test('detects official static-export incompatibilities', async (t) => {
@@ -86,8 +93,8 @@ test('detects official static-export incompatibilities', async (t) => {
   });
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   assert.equal(result.audit.recommendation, 'modernize-first');
-  assert.match(result.audit.findings.join(' '), /Static-export conflicts/);
-  assert.match(result.audit.findings.join(' '), /next\/image/);
+  assert.match(text(result.audit.findings), /Static-export conflicts/);
+  assert.match(text(result.audit.findings), /next\/image/);
 });
 
 test('detects request-dependent handlers and uncovered dynamic routes in static export', async (t) => {
@@ -102,8 +109,8 @@ test('detects request-dependent handlers and uncovered dynamic routes in static 
   assert.equal(result.signals.features.dynamicAppRoutes.files, 1);
   assert.equal(result.signals.features.requestDependentRouteHandlers.files, 1);
   assert.equal(result.audit.recommendation, 'modernize-first');
-  assert.match(result.audit.findings.join(' '), /incoming Request/);
-  assert.match(result.audit.findings.join(' '), /without detected generateStaticParams/);
+  assert.match(text(result.audit.findings), /incoming Request/);
+  assert.match(text(result.audit.findings), /without detected generateStaticParams/);
 });
 
 test('detects Next 16 migration cleanup such as middleware and next lint', async (t) => {
@@ -116,8 +123,8 @@ test('detects Next 16 migration cleanup such as middleware and next lint', async
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   assert.equal(result.audit.summary.maintenanceRisk, 'high');
   assert.equal(result.audit.recommendation, 'modernize-first');
-  assert.match(result.audit.findings.join(' '), /deprecated/);
-  assert.match(result.audit.findings.join(' '), /next lint/);
+  assert.match(text(result.audit.findings), /deprecated/);
+  assert.match(text(result.audit.findings), /next lint/);
 });
 
 test('uses the exact npm lockfile version for support and patch review', async (t) => {
@@ -129,7 +136,7 @@ test('uses the exact npm lockfile version for support and patch review', async (
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   assert.equal(result.signals.nextProjects[0].resolvedVersion, '16.3.2');
   assert.equal(result.audit.summary.maintenanceRisk, 'high');
-  assert.match(result.audit.findings.join(' '), /16\.3\.3 patched release/);
+  assert.match(text(result.audit.findings), /16\.3\.3 patched release/);
 });
 
 test('does not treat a canary lockfile version as stable LTS', async (t) => {
@@ -141,7 +148,7 @@ test('does not treat a canary lockfile version as stable LTS', async (t) => {
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   assert.equal(result.audit.summary.maintenanceRisk, 'high');
   assert.equal(result.audit.recommendation, 'modernize-first');
-  assert.match(result.audit.findings.join(' '), /pre-release/);
+  assert.match(text(result.audit.findings), /pre-release/);
 });
 
 test('finds a Next.js workspace below a monorepo root', async (t) => {
@@ -178,7 +185,7 @@ test('treats a stale evidence snapshot as a confidence limit', async (t) => {
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   const stale = auditContinuation(result.signals, new Date('2026-11-01T00:00:00Z'));
   assert.equal(stale.confidence.level, 'medium');
-  assert.match(stale.confidence.basis.join(' '), /stale/);
+  assert.match(text(stale.confidence.basis), /stale/);
 });
 
 test('tracks alias bindings and ignores unused, type-only, comment, string, and shadowed names', async (t) => {
@@ -282,7 +289,7 @@ test('records parse failures, uses only the bounded fallback, and lowers confide
   assert.equal(result.signals.analysis.fallbackFiles, 1);
   assert.equal(result.signals.features.requestBoundApis.evidence[0].detectionMethod, 'regex-fallback');
   assert.equal(result.audit.confidence.level, 'medium');
-  assert.match(result.audit.confidence.basis.join(' '), /AST parsing failed/);
+  assert.match(text(result.audit.confidence.basis), /AST parsing failed/);
 });
 
 test('resolves package-lock v1 and npm-shrinkwrap without executing npm', async (t) => {
@@ -410,7 +417,7 @@ test('prefers installed Next.js, reports lockfile drift, and preserves provenanc
   assert.equal(project.resolvedVersion, '16.3.5');
   assert.equal(project.resolution.source, 'installed');
   assert.equal(project.resolution.scope, 'workspace');
-  assert.match(project.resolutionWarnings[0], /does not match lockfile/);
+  assert.match(text(project.resolutionWarnings), /does not match lockfile/);
   assert.equal(result.audit.confidence.level, 'medium');
 });
 
@@ -443,7 +450,7 @@ test('does not follow an installed Next.js symlink outside the scanned repositor
   const project = signals.nextProjects[0];
   assert.equal(project.resolvedVersion, null);
   assert.equal(project.resolution.source, 'unresolved');
-  assert.match(project.resolutionWarnings[0], /outside the scanned repository/);
+  assert.match(text(project.resolutionWarnings), /outside the scanned repository/);
 });
 
 test('keeps the human supplement fixed at seven fields and accepts all unknown', () => {
@@ -460,16 +467,40 @@ test('keeps the human supplement fixed at seven fields and accepts all unknown',
 
 test('normalizes partial and invalid human input without replacing repository facts', () => {
   const context = normalizeHumanContext({
-    reviewDriver: '開発速度',
-    evidenceStrength: '体感・単発事例',
+    reviewDriver: 'delivery-speed',
+    evidenceStrength: 'anecdotal',
     productionRouteProfile: 'invalid-value',
     note: 'Additional facts stay in the single free-form note.',
   });
-  assert.equal(context.rawAnswers.reviewDriver, '開発速度');
-  assert.equal(context.rawAnswers.evidenceStrength, '体感・単発事例');
+  assert.equal(context.rawAnswers.reviewDriver, 'delivery-speed');
+  assert.equal(context.rawAnswers.evidenceStrength, 'anecdotal');
   assert.equal(context.rawAnswers.productionRouteProfile, 'unknown');
   assert.equal(context.validationErrors.length, 1);
   assert.equal(context.note, 'Additional facts stay in the single free-form note.');
+});
+
+test('accepts pre-0.7 Japanese context values and localized labels as aliases', () => {
+  const legacy = normalizeHumanContext({
+    reviewDriver: '開発速度',
+    evidenceStrength: '体感・単発事例',
+    productionRouteProfile: 'mostly-static-public',
+    deploymentConstraint: 'Node / container',
+    serverCapabilityCriticality: '必須・置換困難',
+    roadmapDirection: '現状維持',
+    changeCapacity: '移行予算なし',
+  });
+  assert.deepEqual(legacy.rawAnswers, {
+    reviewDriver: 'delivery-speed',
+    evidenceStrength: 'anecdotal',
+    productionRouteProfile: 'mostly-static-public',
+    deploymentConstraint: 'node-container',
+    serverCapabilityCriticality: 'essential',
+    roadmapDirection: 'status-quo',
+    changeCapacity: 'no-budget',
+  });
+  assert.equal(legacy.validationErrors.length, 0);
+  assert.equal(legacy.completeness, 1);
+  assert.equal(legacy.suppliedAnswers.reviewDriver, '開発速度');
 });
 
 test('flags static-only vs request-time evidence and prioritizes configuration investigation', async (t) => {
@@ -481,7 +512,7 @@ test('flags static-only vs request-time evidence and prioritizes configuration i
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
     deploymentConstraint: 'static-only',
-    productionRouteProfile: '主に静的公開ページ',
+    productionRouteProfile: 'mostly-static-public',
   }));
   assert.equal(integrated.continuation.recommendation, 'modernize-first');
   assert.ok(integrated.humanEvidence.contradictions.some((item) => item.code === 'static-only-vs-request-time'));
@@ -499,7 +530,7 @@ test('does not create migration-candidate from answers and preserves measured su
   });
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   const measured = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
-    reviewDriver: 'インフラ費用', evidenceStrength: '継続的な計測', changeCapacity: '小さなspikeのみ',
+    reviewDriver: 'infrastructure-cost', evidenceStrength: 'continuous-measurement', changeCapacity: 'small-spike-only',
   }));
   assert.equal(measured.humanEvidence.recommendationBeforeHumanEvidence, 'migration-candidate');
   assert.equal(measured.continuation.recommendation, 'migration-candidate');
@@ -511,7 +542,7 @@ test('does not create migration-candidate from answers and preserves measured su
   });
   t.after(() => fs.rm(keepResult.root, { recursive: true, force: true }));
   const answerOnly = integrateHumanEvidence(keepResult.audit, keepResult.signals, normalizeHumanContext({
-    reviewDriver: 'インフラ費用', evidenceStrength: '複数の障害・SLO違反', changeCapacity: '全面移行を実施可能',
+    reviewDriver: 'infrastructure-cost', evidenceStrength: 'repeated-incidents', changeCapacity: 'full-migration',
   }));
   assert.notEqual(answerOnly.continuation.recommendation, 'migration-candidate');
 });
@@ -525,10 +556,10 @@ test('constrains a migration candidate when capacity is absent and weak evidence
   });
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
-    reviewDriver: '開発速度', evidenceStrength: '体感・単発事例', changeCapacity: '移行予算なし',
+    reviewDriver: 'delivery-speed', evidenceStrength: 'anecdotal', changeCapacity: 'no-budget',
   }));
   assert.equal(integrated.continuation.recommendation, 'keep-and-simplify');
-  assert.match(integrated.continuation.nextSteps.join(' '), /continuing measurements/);
+  assert.match(text(integrated.continuation.nextSteps), /continuing measurements/);
 });
 
 test('reports a contradiction when detected server value is reported unused', async (t) => {
@@ -540,7 +571,7 @@ test('reports a contradiction when detected server value is reported unused', as
   });
   t.after(() => fs.rm(result.root, { recursive: true, force: true }));
   const integrated = integrateHumanEvidence(result.audit, result.signals, normalizeHumanContext({
-    serverCapabilityCriticality: '利用していない',
+    serverCapabilityCriticality: 'unused',
   }));
   assert.ok(integrated.humanEvidence.contradictions.some((item) => item.code === 'reported-unused-vs-detected-server'));
   assert.equal(integrated.continuation.summary.keepValue, result.audit.summary.keepValue);
@@ -558,7 +589,8 @@ test('interactive mode does not prompt or hang when stdin is not a TTY', async (
   const output = JSON.parse(stdout);
   assert.equal(output.humanEvidence.promptStatus, 'skipped-non-tty');
   assert.equal(output.humanEvidence.unknownFields.length, 7);
-  assert.match(output.humanEvidence.promptWarning, /without a TTY/);
+  assert.equal(output.humanEvidence.promptWarning.id, 'prompt.nonTty');
+  assert.match(output.humanEvidence.promptWarning.text, /without a TTY/);
 });
 
 test('context file is reflected in both human-readable and JSON output', async (t) => {
@@ -567,7 +599,7 @@ test('context file is reflected in both human-readable and JSON output', async (
     'package-lock.json': npmLock(),
     'app/page.tsx': 'export default function Page() { return null }',
     'context.json': {
-      answers: { reviewDriver: '開発速度', evidenceStrength: '体感・単発事例', changeCapacity: '小さなspikeのみ' },
+      answers: { reviewDriver: 'delivery-speed', evidenceStrength: 'anecdotal', changeCapacity: 'small-spike-only' },
       note: 'Keep raw context separate from source findings.',
     },
   });
@@ -575,13 +607,13 @@ test('context file is reflected in both human-readable and JSON output', async (
   const cli = path.resolve('scripts/assess.mjs');
   const contextPath = path.join(root, 'context.json');
   const [human, json] = await Promise.all([
-    execFileAsync(process.execPath, [cli, root, '--context', contextPath], { timeout: 5_000 }),
-    execFileAsync(process.execPath, [cli, root, '--context', contextPath, '--json'], { timeout: 5_000 }),
+    execFileAsync(process.execPath, [cli, root, '--context', contextPath, '--lang', 'en'], { timeout: 5_000 }),
+    execFileAsync(process.execPath, [cli, root, '--context', contextPath, '--json', '--lang', 'en'], { timeout: 5_000 }),
   ]);
   assert.match(human.stdout, /Human evidence supplement:/);
-  assert.match(human.stdout, /reviewDriver: 開発速度/);
+  assert.match(human.stdout, /reviewDriver: delivery-speed \(delivery speed\)/);
   const output = JSON.parse(json.stdout);
-  assert.equal(output.humanEvidence.rawAnswers.reviewDriver, '開発速度');
+  assert.equal(output.humanEvidence.rawAnswers.reviewDriver, 'delivery-speed');
   assert.equal(output.humanEvidence.note, 'Keep raw context separate from source findings.');
   assert.equal(output.humanEvidence.implications[0].field, 'reviewDriver');
 });

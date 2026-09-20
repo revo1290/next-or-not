@@ -1,0 +1,50 @@
+name: Detection or decision change / 検出・判断の変更提案
+description: Propose a new signal, or argue that a recommendation is wrong for a real project.
+labels: [detection]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project values evidence over opinion. A proposal that names the source pattern and the
+        official documentation behind it moves much faster than one that does not.
+
+        このプロジェクトは意見より証拠を重視します。対象となるソース上のパターンと、その裏付けとなる
+        公式ドキュメントを示していただけると、議論がずっと速く進みます。
+
+  - type: textarea
+    id: pattern
+    attributes:
+      label: Source pattern / 対象のソースパターン
+      description: What exactly should be detected, at the level of imports, exports, directives, or configuration?
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why it changes the decision / なぜ判断が変わるのか
+      description: |
+        Which of the four dimensions does it move — keep value, migration coupling, maintenance risk,
+        or portability opportunity — and why?
+        4つの観点（継続価値・移行結合度・保守リスク・可搬性の余地）のどれを、なぜ動かしますか。
+    validations:
+      required: true
+
+  - type: input
+    id: documentation
+    attributes:
+      label: Official documentation / 公式ドキュメント
+      description: A link to the Next.js or React documentation that establishes the behavior.
+      placeholder: https://nextjs.org/docs/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: Known false positives / 想定される誤検出
+      description: |
+        Where would this pattern appear without carrying the runtime meaning — comments, type-only imports,
+        unrelated same-name functions?
+        コメント、型のみのimport、無関係な同名関数など、runtimeの意味を持たずに同じパターンが現れる箇所はありますか。

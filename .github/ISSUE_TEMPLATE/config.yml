@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability / セキュリティ上の問題
+    url: https://github.com/revo1290/next-or-not/security/advisories/new
+    about: Report privately, not as a public issue. 公開issueではなく非公開で報告してください。
+  - name: Question or discussion / 質問・相談
+    url: https://github.com/revo1290/next-or-not/discussions
+    about: For usage questions and open-ended discussion. 使い方の質問や自由な議論はこちら。

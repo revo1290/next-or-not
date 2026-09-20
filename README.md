@@ -1,30 +1,106 @@
 # next-or-not
 
+[![CI](https://github.com/revo1290/next-or-not/actions/workflows/ci.yml/badge.svg)](https://github.com/revo1290/next-or-not/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](package.json)
+
+**English** · [日本語](README.ja.md)
+
 `next-or-not` audits an **existing Next.js repository** and answers a narrower, safer question than a framework leaderboard:
 
 > Should this application keep Next.js, simplify its Next-specific surface, modernize first, or become a candidate for measured migration discovery?
 
 It is a read-only AST analyzer plus an installable agent skill. It does not execute project code, package scripts, upload source, or authorize a rewrite.
 
+Reports are available in **English and Japanese** (`--lang en` / `--lang ja`); see [Report language](#report-language).
+
 ## Quick start
 
 ```bash
 git clone https://github.com/revo1290/next-or-not.git
 cd next-or-not
+npm install
 node scripts/assess.mjs /path/to/existing-next-app
 ```
+
+Without cloning:
+
+```bash
+npx github:revo1290/next-or-not /path/to/existing-next-app
+```
+
+> This package is not on the npm registry yet, so `npx next-or-not` does not resolve.
+> Use the `github:` form above, or a clone, until it is published.
+
+<details>
+<summary>Example output</summary>
+
+```text
+Recommendation: keep
+Confidence: high
+Router: app
+
+Decision dimensions:
+  Keep value:               medium
+  Migration coupling:       medium
+  Maintenance risk:         low
+  Portability opportunity:  low
+
+Observed findings:
+  - Detected app router usage across 2 route-related file(s).
+  - .: 16.3.5 (lockfile: package-lock.json) — 16.x is Active LTS in the evidence snapshot.
+  - Route Handlers: 1 file(s) (app/api/items/route.ts)
+  - Request-bound APIs: 1 file(s) (app/page.tsx)
+
+Next checks:
+  - Document which detected server capabilities justify Next.js and add regression coverage for their cache and runtime behavior.
+  - Add project evidence for hosting constraints, operational pain, and migration budget before authorizing a rewrite.
+
+This is migration triage, not authorization to rewrite. Use --json for file-level evidence.
+```
+
+</details>
 
 For machine-readable evidence:
 
 ```bash
-node scripts/assess.mjs /path/to/existing-next-app --json
+npx github:revo1290/next-or-not /path/to/existing-next-app --json
 ```
 
-Add the seven non-code facts that can change the action without replacing repository evidence:
+### Requirements
+
+Node.js 20 or newer. The scan reads files only; it never installs dependencies, runs package scripts, or sends source over the network.
+
+## Report language
+
+| Selector | Example | Precedence |
+|---|---|---|
+| `--lang` | `--lang ja` | 1 (highest) |
+| `NEXT_OR_NOT_LANG` | `NEXT_OR_NOT_LANG=ja` | 2 |
+| `LC_ALL`, `LC_MESSAGES`, `LANG` | `LANG=ja_JP.UTF-8` | 3 |
+| default | — | `en` |
+
+Supported values are `en` and `ja`. An unrecognized **environment** value falls back to English silently; an unrecognized `--lang` value is an error, so a typo never silently changes the report.
+
+Language affects prose only. Recommendation states, dimension levels, router names, field names, and context values are locale-independent identifiers and never change. With `--json`, each message carries both a stable `id` and the translated `text`:
+
+```json
+{
+  "id": "finding.router",
+  "params": { "router": "app", "count": 2 },
+  "text": "Detected app router usage across 2 route-related file(s)."
+}
+```
+
+That makes the JSON output safe to assert on in CI regardless of the reader's locale. To add a language, copy `scripts/i18n/en.mjs`, translate the values, and register it in `scripts/i18n/index.mjs`; the test suite fails if any catalog is missing a key.
+
+## Human evidence supplement
+
+Seven non-code facts can change the action without replacing repository evidence:
 
 ```bash
-node scripts/assess.mjs /path/to/existing-next-app --context context.json
-node scripts/assess.mjs /path/to/existing-next-app --interactive
+npx github:revo1290/next-or-not /path/to/existing-next-app --context context.json
+npx github:revo1290/next-or-not /path/to/existing-next-app --interactive
 ```
 
 `--interactive` prompts only in a TTY and skips fields already supplied by `--context`. A context file may contain the fields directly or below `answers`:
@@ -32,23 +108,41 @@ node scripts/assess.mjs /path/to/existing-next-app --interactive
 ```json
 {
   "answers": {
-    "reviewDriver": "開発速度",
-    "evidenceStrength": "継続的な計測",
+    "reviewDriver": "delivery-speed",
+    "evidenceStrength": "continuous-measurement",
     "productionRouteProfile": "mixed",
-    "deploymentConstraint": "Node / container",
-    "serverCapabilityCriticality": "重要だが代替可能",
-    "roadmapDirection": "現状維持",
-    "changeCapacity": "小さなspikeのみ"
+    "deploymentConstraint": "node-container",
+    "serverCapabilityCriticality": "important-but-replaceable",
+    "roadmapDirection": "status-quo",
+    "changeCapacity": "small-spike-only"
   },
   "note": "Additional facts belong in this one free-form note."
 }
 ```
 
+### Accepted values
+
+| Field | Values |
+|---|---|
+| `reviewDriver` | `no-clear-problem`, `delivery-speed`, `reliability-incidents`, `hosting-compliance`, `infrastructure-cost`, `unknown` |
+| `evidenceStrength` | `none`, `anecdotal`, `continuous-measurement`, `repeated-incidents`, `unknown` |
+| `productionRouteProfile` | `mostly-static-public`, `mostly-authenticated-client`, `mostly-request-time-dynamic`, `mixed`, `unknown` |
+| `deploymentConstraint` | `static-only`, `node-container`, `edge-runtime`, `vercel-managed`, `flexible`, `unknown` |
+| `serverCapabilityCriticality` | `unused`, `easily-replaceable`, `important-but-replaceable`, `essential`, `unknown` |
+| `roadmapDirection` | `simplify-to-static-client`, `status-quo`, `more-server-integration`, `undecided`, `unknown` |
+| `changeCapacity` | `no-budget`, `small-spike-only`, `incremental-migration`, `full-migration`, `unknown` |
+
 Every field accepts `unknown`; blank interactive answers become `unknown`. Invalid values are also converted to `unknown` with a structured validation error instead of affecting the recommendation.
 
-## What changed in v0.2
+Display labels from any bundled locale are accepted as aliases, so context files written before v0.7 — whose values were Japanese labels such as `開発速度` — keep working unchanged. JSON output reports the canonical key in `rawAnswers` and preserves whatever you wrote in `suppliedAnswers`.
 
-The first version ranked frameworks using user-supplied answers and additive scores. That was explainable, but too sensitive to subjective inputs and arbitrary weights. v0.2 instead audits four independent dimensions:
+The seven fields are fixed: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Additional information goes into `note`, not an eighth scored question.
+
+Raw answers, derived implications, code/context contradictions, validation errors, and the recommendation before/after integration are separate in JSON. Answers cannot erase code evidence or independently create `migration-candidate`. Low-strength pain remains a measurement task; static-only deployment conflicting with request-time code becomes a configuration investigation; and unavailable migration capacity constrains action to reversible simplification.
+
+## What the audit measures
+
+The first version ranked frameworks using user-supplied answers and additive scores. That was explainable, but too sensitive to subjective inputs and arbitrary weights. The tool instead audits four independent dimensions:
 
 | Dimension | Question |
 |---|---|
@@ -94,12 +188,6 @@ Version resolution is read-only and workspace-specific. The precedence is: works
 
 The detailed derivation and known blind spots are in [`references/decision-model.md`](references/decision-model.md).
 
-## Seven-question human evidence supplement
-
-The seven fields are fixed: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Additional information goes into `note`, not an eighth scored question.
-
-Raw answers, derived implications, code/context contradictions, validation errors, and the recommendation before/after integration are separate in JSON. Answers cannot erase code evidence or independently create `migration-candidate`. Low-strength pain remains a measurement task; static-only deployment conflicting with request-time code becomes a configuration investigation; and unavailable migration capacity constrains action to reversible simplification.
-
 ## Agent skill
 
 Install or link this repository as a skill and invoke `$next-or-not`. The skill runs the audit, verifies material findings in source, asks only for business facts that cannot be derived from code, and produces a continuation decision with a rollback-safe validation plan.
@@ -132,6 +220,8 @@ Legacy binary `bun.lockb` is identified but not guessed. If no safe installed-pa
 
 ## Contributing
 
+Contributions are welcome in English or Japanese — see [CONTRIBUTING.md](CONTRIBUTING.md) ([日本語版](CONTRIBUTING.ja.md)) and the [Code of Conduct](CODE_OF_CONDUCT.md). To report a security issue, read [SECURITY.md](SECURITY.md) first.
+
 Run the complete check before opening a pull request:
 
 ```bash
@@ -144,4 +234,4 @@ Changes must keep the dangerous-error gate at zero. A dangerous error is a migra
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

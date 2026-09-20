@@ -8,14 +8,34 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The pinned calibration set is not run here; `calibration.yml` owns it, because
+# it needs network access, caching, and artifact upload.
 jobs:
-  test:
+  check:
+    name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Unit, CLI and i18n tests
+        run: npm test
+      - name: Validate skill metadata
+        run: npm run validate:skill
+      - name: Validate documentation against the code contract
+        run: npm run validate:docs
+      - name: Validate calibration manifest
+        run: npm run dataset:validate
