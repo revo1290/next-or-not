@@ -1,0 +1,72 @@
+name: Bug report / バグ報告
+description: A wrong detection, a crash, or output that does not match the documentation.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please write in English or Japanese — either is fine.
+        英語でも日本語でも構いません。
+
+        For security issues, do not open an issue. See [SECURITY.md](https://github.com/revo1290/next-or-not/blob/main/SECURITY.md).
+        セキュリティ上の問題はissueではなく、SECURITY.md の手順で報告してください。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened? / 何が起きましたか
+      description: What did you expect, and what did you get instead?
+      placeholder: |
+        Expected: keep-and-simplify
+        Actual: migration-candidate
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction / 最小の再現構成
+      description: |
+        The analyzer is deterministic on file contents, so a minimal file layout is usually enough to diagnose.
+        解析はファイル内容に対して決定的なので、最小のファイル構成があればたいてい特定できます。
+      placeholder: |
+        package.json      -> { "dependencies": { "next": "16.3.5" } }
+        package-lock.json -> lockfileVersion 3, next 16.3.5
+        app/page.tsx      -> "import { cookies } from 'next/headers'"
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output / 出力
+      description: Paste the relevant part of `--json` output if you can; it carries file, line, and detectionMethod.
+      render: json
+
+  - type: input
+    id: version
+    attributes:
+      label: next-or-not version or commit / バージョンまたはcommit
+      placeholder: "0.7.0 or 7dc87f2"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Node.js version and OS / Node.jsのバージョンとOS
+      placeholder: "Node 22.11.0, macOS 15.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Report language used / 使用したレポート言語
+      options:
+        - en
+        - ja
+        - not relevant / 関係なし
+    validations:
+      required: true

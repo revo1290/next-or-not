@@ -4,3 +4,5 @@ dist/
 coverage/
 .DS_Store
 *.log
+dataset/results-smoke.json
+.eslintcache

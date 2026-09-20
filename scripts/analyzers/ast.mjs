@@ -233,7 +233,7 @@ function exportedFeatures(ast) {
   const exported = exportedBindingNames(ast);
   const features = [];
   const handlers = [];
-  for (const [local, record] of exported) {
+  for (const record of exported.values()) {
     const name = record.exported;
     const declarationPath = bindingDeclarationPath(record);
     const line = lineOf(record.path.node);

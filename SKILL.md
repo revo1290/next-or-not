@@ -9,10 +9,10 @@ Produce a defensible continuation decision for an existing Next.js system. Repos
 
 ## Workflow
 
-1. Resolve this skill's directory and run `node <skill-path>/scripts/assess.mjs <project-path> --json`. The command is read-only and does not execute project code.
+1. Resolve this skill's directory and run `node <skill-path>/scripts/assess.mjs <project-path> --json`. The command is read-only and does not execute project code. Add `--lang ja` when reporting to a Japanese-speaking user; prose is localized while every identifier below stays the same.
 2. Confirm material detections in the listed source/configuration evidence. The scanner uses AST bindings and records file, line, and detection method. Confirm each workspace's `resolution.source`, warnings, and errors; then pay particular attention to any `regex-fallback` result, server APIs, mixed routers, static-export conflicts, and deprecated Next 16 patterns.
 3. Read [references/decision-model.md](references/decision-model.md) to interpret the four dimensions and recommendation states. Read [references/framework-evidence.md](references/framework-evidence.md) when support policy, feature compatibility, or a framework claim affects the conclusion.
-4. Supply already-known non-code facts through `--context`. Ask only the still-unknown members of the fixed seven fields: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Put any extra fact in the single free-form `note`; do not create an eighth scored question.
+4. Supply already-known non-code facts through `--context`. Ask only the still-unknown members of the fixed seven fields: review driver, evidence strength, production route profile, deployment constraint, server-capability criticality, 12–18 month roadmap, and change capacity. Context values are locale-independent keys such as `delivery-speed` and `no-budget`; the README tables list the accepted set per field. Put any extra fact in the single free-form `note`; do not create an eighth scored question.
 5. If the decision is consequential and internet access is available, refresh time-sensitive support/security claims from the linked official sources. State the verification date. A stale bundled snapshot lowers confidence; it does not prove a version is unsupported.
 6. Return a continuation decision, not a framework popularity comparison. Include observed facts, inferences, unknowns, risks, and the smallest rollback-safe validation step.
 
@@ -37,6 +37,10 @@ Keep these conclusions independent:
 - Never equate SEO with a Next.js requirement, or Next.js with mandatory Vercel hosting.
 - Do not run `next build`, package scripts, codemods, upgrades, or migrations without the user's authorization; these execute or mutate project code.
 - Preserve the existing application while testing alternatives. A valid spike uses one representative vertical slice and has an explicit rollback path.
+
+## Reading JSON output
+
+`--json` emits `schemaVersion: 5`. Structural values — `recommendation`, dimension levels, `router`, `confidence.level`, context field names and their values — are stable identifiers that never change with language. Human-readable entries (`findings`, `nextSteps`, `unknowns`, `confidence.basis`, contradiction and implication text) are objects carrying `{ id, params, text }`. Key off `id` when a conclusion depends on a specific detection; quote `text` when reporting to the user. Never key off `text`.
 
 ## Output contract
 

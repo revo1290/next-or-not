@@ -1,6 +1,7 @@
 interface:
   display_name: "Next or Not"
-  short_description: "既存Next.jsの継続・整理・移行調査をコード根拠で判定"
+  short_description: "Audit an existing Next.js repo from source evidence: keep, simplify, modernize, or investigate migration"
+  short_description_ja: "既存Next.jsの継続・整理・移行調査をコード根拠で判定"
   default_prompt: "Use $next-or-not to audit this existing Next.js repository and decide whether to keep, simplify, modernize, or investigate migration."
 policy:
   allow_implicit_invocation: true

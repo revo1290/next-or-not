@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import YAML from 'yaml';
 
+import { msg } from '../i18n/index.mjs';
+
 const MAX_LOCKFILE_BYTES = 20_000_000;
 
 async function exists(target) {
@@ -218,7 +220,7 @@ async function loadLockfile(root, packageManager) {
     try {
       if (name === 'bun.lockb') return {
         resolver: null,
-        error: { file: name, code: 'unsupported-binary-lockfile', message: 'bun.lockb is binary and is not guessed; use bun.lock or an installed package.' },
+        error: { file: name, code: 'unsupported-binary-lockfile', message: msg('resolution.binaryLockfile') },
       };
       const text = await boundedRead(target);
       if (packageManager === 'npm') return { resolver: npmResolver(JSON.parse(text), name), error: null };
@@ -229,7 +231,7 @@ async function loadLockfile(root, packageManager) {
       }
       return { resolver: bunResolver(JSON.parse(stripJsonComments(text)), name), error: null };
     } catch (error) {
-      return { resolver: null, error: { file: name, code: 'malformed-lockfile', message: error.message } };
+      return { resolver: null, error: { file: name, code: 'malformed-lockfile', message: msg('resolution.malformedLockfile', { reason: error.message }) } };
     }
   }
   return { resolver: null, error: null };
@@ -240,7 +242,10 @@ async function detectPackageManager(root) {
     const pkg = await readJson(path.join(root, 'package.json'));
     const declared = pkg.packageManager?.match(/^(npm|pnpm|yarn|bun)@/)?.[1];
     if (declared) return declared;
-  } catch {}
+  } catch {
+    // A missing or malformed root package.json is not fatal here; fall through
+    // to lockfile detection below.
+  }
   if (await exists(path.join(root, 'pnpm-lock.yaml'))) return 'pnpm';
   if (await exists(path.join(root, 'yarn.lock'))) return 'yarn';
   if (await exists(path.join(root, 'bun.lock')) || await exists(path.join(root, 'bun.lockb'))) return 'bun';
@@ -252,7 +257,7 @@ async function installedCandidate(root, projectRoot, candidateRoot, scope) {
   const target = path.join(candidateRoot, 'node_modules', 'next', 'package.json');
   try {
     const real = await fs.realpath(target);
-    if (!inside(real, root)) return { candidate: null, warning: `${portable(root, target)} resolves outside the scanned repository and was not read.` };
+    if (!inside(real, root)) return { candidate: null, warning: msg('resolution.outsideRepository', { file: portable(root, target) }) };
     const pkg = await readJson(real);
     return {
       candidate: resultCandidate(exactSemver(pkg.version), {
@@ -262,7 +267,7 @@ async function installedCandidate(root, projectRoot, candidateRoot, scope) {
     };
   } catch (error) {
     if (error.code === 'ENOENT') return { candidate: null, warning: null };
-    return { candidate: null, warning: `Could not read ${portable(root, target)}: ${error.message}` };
+    return { candidate: null, warning: msg('resolution.unreadable', { file: portable(root, target), reason: error.message }) };
   }
 }
 
@@ -298,7 +303,7 @@ export async function createNextVersionResolver(projectPath) {
       const installed = localInstalled.candidate ?? hoistedInstalled.candidate;
       const locked = lock.workspace ?? lock.root;
       if (installed && locked && installed.version !== locked.version) {
-        warnings.push(`Installed Next.js ${installed.version} does not match lockfile Next.js ${locked.version} for ${workspacePath}.`);
+        warnings.push(msg('resolution.installedLockfileMismatch', { installed: installed.version, locked: locked.version, workspace: workspacePath }));
       }
       const declaredExact = exactSemver(declaredVersion) ? {
         version: exactSemver(declaredVersion), source: 'declared', scope: 'workspace',
@@ -310,7 +315,7 @@ export async function createNextVersionResolver(projectPath) {
         resolution: chosen ?? {
           version: null, source: 'unresolved', scope: 'workspace',
           file: loaded.error?.file ?? null, packageManager, lockfileVersion: null,
-          reason: loaded.error?.message ?? 'No exact installed, lockfile, or declared Next.js version was found.',
+          reason: loaded.error?.message ?? msg('resolution.noExactVersion'),
         },
         warnings,
         errors: loaded.error ? [loaded.error] : [],
