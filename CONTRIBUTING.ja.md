@@ -103,6 +103,34 @@ findings.push(msg('finding.router', { router: msg(`router.${signals.router}`), c
 - pull requestテンプレートを埋め、その変更がどの証拠に基づくかを説明してください。
 - 片方の言語の文章を変更するpull requestは、他の言語も併せて変更するか、変更しない理由を明示してください。
 
+## リリース
+
+公開はメンテナのみが行います。リリースはタグ駆動で、チェック一式とtarballのスモークテストが通らない限りnpmには何も届きません。
+
+1. `main` が緑で、リリースに含めたいものが全部入っていることを確認します。
+2. `CHANGELOG.md` を更新します。`Unreleased` の項目を新しいバージョン見出し（当日の日付つき）へ移し、末尾の比較リンクを追加します。
+3. `package.json` の `version` を合わせます。タグと `package.json` が食い違うとworkflowが公開を拒否します。
+4. ローカルでもう一度 `npm run check` を実行します。
+5. コミットし、pull requestを出してマージします。
+6. マージコミットにタグを打ってpushします。
+
+   ```bash
+   git checkout main && git pull
+   git tag -a v0.7.1 -m "v0.7.1"
+   git push origin v0.7.1
+   ```
+
+`Release` workflowが、チェック一式の実行、タグと `package.json` の照合、packしたtarballをクリーンなプロジェクトへインストールして `bin` のシンボリックリンク経由で両言語のCLIを実行、npm provenance付きでの公開、GitHub releaseの作成まで行います。
+
+公開せずに予行演習したい場合は、Actionsタブから手動実行し、**Pack and verify without publishing** をオンのままにしてください。verifyジョブで止まります。
+
+### 初回のみ必要な設定
+
+- `next-or-not` への公開権限を持つnpm automation tokenを、リポジトリsecretの `NPM_TOKEN` として登録します。
+- `npm-publish` という名前のリポジトリenvironmentを作成します。レジストリへ送る前に人間の承認を挟みたい場合は、required reviewersを設定してください。
+
+provenanceにはworkflowの `id-token: write` 権限が必要ですが、これは設定済みです。公開済みバージョンは差し替えられず、deprecateしかできません。ミスの代償はパッチバージョンを1つ消費することで、上書きではありません。
+
 ## バグ報告
 
 バグ用のテンプレートでissueを作成してください。誤検出を再現する最小のリポジトリ構成があると、説明文よりもずっと助かります。解析はファイル内容に対して完全に決定的なので、たいていfixtureだけで原因を特定できます。

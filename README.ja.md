@@ -26,11 +26,11 @@ node scripts/assess.mjs /path/to/existing-next-app --lang ja
 cloneせずに使う場合:
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app --lang ja
+npx next-or-not /path/to/existing-next-app --lang ja
 ```
 
-> このパッケージはまだnpmレジストリに公開されていないため、`npx next-or-not` は解決できません。
-> 公開されるまでは、上の `github:` 形式かcloneを使ってください。
+> npmでの公開は **v0.7.1** からです。そのタグが公開されるまでは
+> `npx github:revo1290/next-or-not` を使ってください。既定ブランチから同じものがビルドされます。
 
 <details>
 <summary>出力例</summary>
@@ -64,7 +64,7 @@ router: app
 機械可読な根拠が必要な場合:
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app --json --lang ja
+npx next-or-not /path/to/existing-next-app --json --lang ja
 ```
 
 ### 必要環境
@@ -99,8 +99,8 @@ Node.js 20以降。スキャンはファイルを読むだけで、依存のイ�
 コードからは分からない7つの事実は、リポジトリの証拠を置き換えることなく、推奨アクションを変えることがあります。
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app --context context.json --lang ja
-npx github:revo1290/next-or-not /path/to/existing-next-app --interactive --lang ja
+npx next-or-not /path/to/existing-next-app --context context.json --lang ja
+npx next-or-not /path/to/existing-next-app --interactive --lang ja
 ```
 
 `--interactive` はTTYがあるときだけ質問し、`--context` で既に与えられた項目は飛ばします。contextファイルは、フィールドを直接書いても `answers` の下に書いても構いません。

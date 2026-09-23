@@ -1,0 +1,115 @@
+name: Release
+
+# Publishing is driven by a version tag. The tag must match the version in
+# package.json, and the full check suite must pass, before anything is sent to
+# the registry — a published version cannot be replaced, only deprecated.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Pack and verify without publishing
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify the release candidate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Run the full check suite
+        run: npm run check
+
+      - name: Tag must match package.json version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          declared="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$declared" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $declared"
+            exit 1
+          fi
+          echo "Tag and package.json agree on $declared"
+
+      - name: Verify the CLI runs from the packed tarball
+        run: |
+          set -euo pipefail
+          tarball="$(npm pack --silent | tail -1)"
+          work="$(mktemp -d)"
+          # A fixture the audit must recognize as a Next.js app.
+          mkdir -p "$work/fixture/app"
+          echo '{"name":"fixture","private":true,"dependencies":{"next":"16.3.5","react":"19.1.0"}}' > "$work/fixture/package.json"
+          echo 'export default function Page() { return null }' > "$work/fixture/app/page.tsx"
+          mkdir -p "$work/consumer"
+          cd "$work/consumer"
+          npm init -y > /dev/null
+          npm install --silent "$GITHUB_WORKSPACE/$tarball"
+          # Invoke through the bin symlink, the way an install and npx do.
+          for lang in en ja; do
+            out="$(./node_modules/.bin/next-or-not "$work/fixture" --lang "$lang")"
+            if [ -z "$out" ]; then
+              echo "::error::The CLI produced no output for --lang $lang"
+              exit 1
+            fi
+            echo "--- $lang ---"
+            echo "$out" | head -3
+          done
+          ./node_modules/.bin/next-or-not "$work/fixture" --json | node -e '
+            let d = ""; process.stdin.on("data", (c) => { d += c; }).on("end", () => {
+              const j = JSON.parse(d);
+              if (j.schemaVersion !== 5) { console.error("unexpected schemaVersion", j.schemaVersion); process.exit(1); }
+              if (!j.continuation.recommendation) { console.error("no recommendation"); process.exit(1); }
+              console.log("JSON output valid:", j.continuation.recommendation);
+            });
+          '
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-tarball
+          path: "*.tgz"
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v') && (github.event_name != 'workflow_dispatch' || !inputs.dry_run)
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: write
+      # Required for npm provenance, which attests that this tarball was built
+      # from this commit in this workflow.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "See [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md) for what changed in this release." \
+            --verify-tag

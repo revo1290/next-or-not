@@ -26,11 +26,12 @@ node scripts/assess.mjs /path/to/existing-next-app
 Without cloning:
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app
+npx next-or-not /path/to/existing-next-app
 ```
 
-> This package is not on the npm registry yet, so `npx next-or-not` does not resolve.
-> Use the `github:` form above, or a clone, until it is published.
+> npm releases start at **v0.7.1**. Until that tag is published, use
+> `npx github:revo1290/next-or-not` instead — the same command, built from the
+> default branch.
 
 <details>
 <summary>Example output</summary>
@@ -64,7 +65,7 @@ This is migration triage, not authorization to rewrite. Use --json for file-leve
 For machine-readable evidence:
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app --json
+npx next-or-not /path/to/existing-next-app --json
 ```
 
 ### Requirements
@@ -99,8 +100,8 @@ That makes the JSON output safe to assert on in CI regardless of the reader's lo
 Seven non-code facts can change the action without replacing repository evidence:
 
 ```bash
-npx github:revo1290/next-or-not /path/to/existing-next-app --context context.json
-npx github:revo1290/next-or-not /path/to/existing-next-app --interactive
+npx next-or-not /path/to/existing-next-app --context context.json
+npx next-or-not /path/to/existing-next-app --interactive
 ```
 
 `--interactive` prompts only in a TTY and skips fields already supplied by `--context`. A context file may contain the fields directly or below `answers`:
